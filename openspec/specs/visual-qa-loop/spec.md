@@ -47,6 +47,10 @@ For each rendered panel, emit a JSON drift report:
     { "id": "plate.trace-present",      "spec": "trace-plate",     "pass": true,  "confidence": 0.91 },
     { "id": "plate.trace-legible",      "spec": "trace-plate",     "pass": true,  "confidence": 0.89 },
     { "id": "plate.trace-content",      "spec": "trace-plate",     "pass": true,  "confidence": 0.94, "note": "matches proposal.md trace_spec" },
+    { "id": "plate.lesson-present",     "spec": "trace-plate",     "pass": true,  "confidence": 0.93 },
+    { "id": "plate.lesson-legible",     "spec": "trace-plate",     "pass": true,  "confidence": 0.90 },
+    { "id": "plate.lesson-slug-valid",  "spec": "lessons",         "pass": true,  "confidence": 0.96, "note": "slug is in registry" },
+    { "id": "plate.lesson-spec-aligned","spec": "lessons",         "pass": true,  "confidence": 0.88, "note": "declared spec is in lesson's coverage list" },
     { "id": "plate.symmetry",           "spec": "trace-plate",     "pass": true,  "confidence": 0.90 }
   ],
   "drift_score": 0.14,

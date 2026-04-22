@@ -12,22 +12,24 @@ After each strip, the reader leaves with a *trivial yet devastating* improvement
 
 ## The ladder
 
-| # | Concept | One-line reader takeaway | Depends on |
-|---|---|---|---|
-| C01 | Clean context is fragile | "Starting fresh every time loses everything that mattered." | — |
-| C02 | Saving context (naively) | "Copy-pasting isn't saving. Saving means you can find it again." | C01 |
-| C03 | Git history is time-context | "Your project remembers what you forgot — if you let it." | C02 |
-| C04 | Commits impose order | "Every commit answers: what was true before this, and after." (Lamport, unnamed) | C03 |
-| C05 | Specs merge without conflict | "Two edits to the same rule? The spec reconciles, not you." (CRDT, unnamed) | C04 |
-| C06 | Specs are the contract | "Ask for what you want in writing. Code converges toward it, not the other way." | C05 |
-| C07 | Iteration was always there | "You've been iterating the whole time. You just weren't aiming." | C06 |
-| C08 | Observability > unit tests | "Tests tell you if yesterday's mistake reappeared. Observability tells you what today's mistake IS." | C07 |
-| C09 | Observability > just logs | "Logs are raw material. Observability is what you do with them." | C08 |
-| C10 | Telemetry = meaning of logs | "A number across time has a shape. That shape is the truth." | C09 |
-| C11 | Meaning is operable | "You can add, multiply, and compare shapes. That's engineering with eyes open." | C10 |
-| C12 | The loop closes | "Last iteration's meaning is this iteration's input. Now you're not guessing — you're converging." | C11 |
-| C13 | BOOM — monotonic convergence | "Ask your AI for monotonic_convergence. You already earned it." | C01–C12 |
-| C14 | Proof by self-reference | "Not sure it applies to your work? This comic was made that way. Repo is right there." | C13 |
+| # | Concept | Lesson slug | One-line reader takeaway | Depends on |
+|---|---|---|---|---|
+| C01 | Clean context is fragile | `lesson_volatile_is_dangerous` | "Starting fresh every time loses everything that mattered." | — |
+| C02 | Saving context (naively) | `lesson_save_means_findable` | "Copy-pasting isn't saving. Saving means you can find it again." | C01 |
+| C03 | Git history is time-context | `lesson_memory_lives_in_history` | "Your project remembers what you forgot — if you let it." | C02 |
+| C04 | Commits impose order | `lesson_discrete_time` | "Every commit answers: what was true before this, and after." (Lamport, unnamed) | C03 |
+| C05 | Specs merge without conflict | `lesson_edits_that_reconcile` | "Two edits to the same rule? The spec reconciles, not you." (CRDT, unnamed) | C04 |
+| C06 | Specs are the contract | `lesson_ask_in_writing` | "Ask for what you want in writing. Code converges toward it, not the other way." | C05 |
+| C07 | Iteration was always there | `lesson_loops_need_aim` | "You've been iterating the whole time. You just weren't aiming." | C06 |
+| C08 | Observability > unit tests | `lesson_see_the_now` | "Tests tell you if yesterday's mistake reappeared. Observability tells you what today's mistake IS." | C07 |
+| C09 | Observability > just logs | `lesson_logs_are_ingredients` | "Logs are raw material. Observability is what you do with them." | C08 |
+| C10 | Telemetry = meaning of logs | `lesson_shape_has_meaning` | "A number across time has a shape. That shape is the truth." | C09 |
+| C11 | Meaning is operable | `lesson_meaning_is_operable` | "You can add, multiply, and compare shapes. That's engineering with eyes open." | C10 |
+| C12 | The loop closes | `lesson_loop_closes` | "Last iteration's meaning is this iteration's input. Now you're not guessing — you're converging." | C11 |
+| C13 | BOOM — monotonic convergence | `lesson_monotonic_convergence` | "Ask your AI for monotonic_convergence. You already earned it." | C01–C12 |
+| C14 | Proof by self-reference | `lesson_proof_by_self_reference` | "Not sure it applies to your work? This comic was made that way. Repo is right there." | C13 |
+
+Lesson slugs are canon per `lessons/spec.md`. Each concept has exactly one primary lesson — the humane, readable phrase the reader carries out of the strip.
 
 ## Strip mapping (initial — subject to revision)
 

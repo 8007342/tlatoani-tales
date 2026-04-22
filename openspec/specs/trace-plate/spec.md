@@ -2,104 +2,142 @@
 
 ## Purpose
 
-Every strip carries a small `[@trace spec:<name>]` plate at the **bottom-left**, mirroring the episode plate at the bottom-right. The trace plate is a visible, public citation — the governing OpenSpec behind the strip's joke. Readers who want more can click. The plate makes observability a *drawn artefact*, not just a tooling convention.
+Every strip carries a **two-line left plate** mirroring the episode plate at the bottom-right. The left plate is a dual citation:
 
-This is the canonical "teach by example" move: the strip that teaches *observability beats tests* itself ships observable evidence, in-frame, before the reader has even finished the last panel.
+- Line 1: `[@Lesson <slug>]` — the humane, readable teaching this strip delivers.
+- Line 2: `[@trace spec:<name>]` — the technical contract governing that teaching.
+
+Non-clickers read the lesson phrase and get the point. Clickers follow the URL into the CRDT of all wisdom aggregated under that lesson (see `lessons/spec.md`). The plate makes observability a *drawn artefact*, not a tooling convention.
+
+Two layers of observability run through the project:
+
+| Layer | Marker | What it observes |
+|---|---|---|
+| Technical trace | `@trace spec:<name>` | Code ↔ spec linkage — which contract governs which implementation |
+| Lesson trace | `@Lesson <slug>` | Spec ↔ teaching linkage — which teaching a spec is in service of |
+
+The plate makes both visible in-frame. `@Lesson` is the observability *of the* `@trace` layer. Teach by example, literally in-panel.
 
 ## Motivation
 
-- Converts casual readers into deep readers: those who follow the plate find the repo, the spec, the commit history, and ultimately the thesis.
-- Closes the loop between the comic and its own source — a reader can trace any joke to the governing contract in one click.
-- Forces authors to choose a primary spec per strip, which is itself a convergent discipline. No trace plate = strip doesn't ship.
+- Converts casual readers into deep readers. The lesson phrase lands alone; the URL opens the whole wisdom graph.
+- **Non-technical readers** read the lesson line ("volatile is dangerous") and walk away wiser with zero clicks.
+- **Technical readers** follow the trace line to the governing spec, then to every file that cites it.
+- Forces authors to pick exactly **one primary lesson + one primary spec** per strip — itself a convergent discipline. No plate = strip doesn't ship.
 
 ## Layout
 
 - **Position**: bottom-**left**, symmetric to the episode plate at bottom-right.
-- **Overlap**: all of panel 1 and ~12% of panel 2 (mirror of the episode plate's overlap on panels 3 + 2).
-- **Styling**: cream scroll / banner motif, dark ink. Same typeface family and weight as the episode plate. This is deliberately identical-looking chrome — it reads as "the other nameplate" on first glance.
-- **Text**: `[@trace spec:<name>]`. Brackets included to echo markdown/code syntax — readers with tech literacy recognize the gesture instantly.
-- **Text wrapping**: if `<name>` is long (e.g. `visual-qa-loop`), split onto two lines:
+- **Overlap**: all of panel 1 and ~12% of panel 2 (mirror of the episode plate's overlap).
+- **Shape**: two-line stack on one scroll/banner motif. Height adjusts to fit both lines; width accommodates the longest slug/spec name.
+- **Styling**: cream scroll, dark ink, same typeface family as the episode plate. Line 1 (`@Lesson`) is primary — slightly bolder or larger than line 2 (`@trace`), reflecting that readers should see the lesson first.
+- **Text**:
   ```
-  [@trace
-   spec:visual-qa-loop]
+  [@Lesson lesson_volatile_is_dangerous]
+  [@trace spec:concept-curriculum]
   ```
-- **Legibility constraint**: MUST NOT obscure character faces or key action. If a natural plate-sized region covers a key element, shrink plate to min 40% of episode-plate area (never below that). QA loop's `plate.legibility` check enforces this.
+- **Text wrapping**: both lines may wrap for unusually long names. Prefer wrapping the `@trace` line first (secondary).
+- **Legibility constraint**: MUST NOT obscure character faces or key action. If a natural plate-sized region covers a key element, shrink to min 40% of episode-plate area (never below). QA checks `plate.*-legible` enforce this.
 
-## Spec-selection rule (per strip)
+## Selection rule (per strip)
 
-Each strip picks **one** primary `@trace spec:<name>`. One is enough — the whole repo is reachable via a single click. Selection priority, highest first:
+Each strip declares one primary lesson and one primary spec in its `proposal.md`:
 
-1. The spec that governs the **visual prop** introduced or highlighted in that strip (e.g. `symbol-dictionary` if the strip shows off a new symbol for the first time).
-2. The spec that governs the **concept** being taught (usually `concept-curriculum`).
-3. `meta-examples` if the joke is meta about the project itself.
+```yaml
+lesson:      lesson_<slug>       # must exist in lessons/spec.md registry
+reinforces:  []                  # optional: other lesson slugs this strip echoes
+trace_spec:  <spec-name>         # the governing OpenSpec for this strip
+```
 
-Declared in each strip's `proposal.md` under `trace_plate:`. The orchestrator reads it, composites the plate, writes the URL into the metadata file.
+Selection priority:
+
+1. The lesson whose **primary strip** is this one in `lessons/spec.md` (obvious case).
+2. For the spec: the one governing the **visual prop** introduced/highlighted, OR the **concept** being taught (usually `concept-curriculum`), OR `meta-examples` if the joke is meta about the project itself.
+3. The declared lesson and spec MUST be consistent — the spec SHOULD appear in the lesson's coverage list. QA check `plate.lesson-spec-aligned` enforces this.
 
 ## Initial strip-to-trace mapping
 
-| Strip | Trace plate | Why |
-|---|---|---|
-| TT #01 — context overflow | `concept-curriculum` | C01 is the root lesson; curriculum is the entry point |
-| TT #02 — naive save | `concept-curriculum` | C02 |
-| TT #03 — git = memory | `meta-examples` (ME01) | git-as-Lamport is the substrate example |
-| TT #04 — hourglasses | `meta-examples` (ME01) | same substrate, now named by symbol |
-| TT #05 — scroll reconciles | `licensing` | licensing IS a live CRDT demo — reinforces by citation |
-| TT #06 — sealed scroll | `concept-curriculum` | C06 is the pivot; keep curriculum in view |
-| TT #07 — treadmill → staircase | `concept-curriculum` | C07 |
-| TT #08 — telescope | `visual-qa-loop` | first observability strip; cite the live loop |
-| TT #09 — dashboard shape | `visual-qa-loop` | ditto |
-| TT #10 — curves | `visual-qa-loop` | ditto |
-| TT #11 — operable meaning | `visual-qa-loop` | ditto |
-| TT #12 — loop closes | `visual-qa-loop` | the payoff strip for the observability arc |
-| TT #13 — BOOM | `meta-examples` | the whole ledger is the evidence |
-| TT #14 — proof by self-reference | `meta-examples` | literally ME-everything |
+| Strip | Lesson | Trace spec | Why |
+|---|---|---|---|
+| TT #01 — context overflow | `lesson_volatile_is_dangerous` | `concept-curriculum` | C01 is the root; curriculum is the entry point |
+| TT #02 — naive save | `lesson_save_means_findable` | `concept-curriculum` | C02 |
+| TT #03 — git = memory | `lesson_memory_lives_in_history` | `meta-examples` | git-as-Lamport (ME01) is the substrate example |
+| TT #04 — hourglasses | `lesson_discrete_time` | `meta-examples` | same substrate, named by symbol (ME01) |
+| TT #05 — scroll reconciles | `lesson_edits_that_reconcile` | `licensing` | licensing IS a live CRDT demo — reinforce by citation |
+| TT #06 — sealed scroll | `lesson_ask_in_writing` | `concept-curriculum` | C06 is the pivot |
+| TT #07 — treadmill → staircase | `lesson_loops_need_aim` | `concept-curriculum` | C07 |
+| TT #08 — telescope | `lesson_see_the_now` | `visual-qa-loop` | first observability strip; cite the live loop |
+| TT #09 — dashboard shape | `lesson_logs_are_ingredients` | `visual-qa-loop` | ditto |
+| TT #10 — curves | `lesson_shape_has_meaning` | `visual-qa-loop` | ditto |
+| TT #11 — operable meaning | `lesson_meaning_is_operable` | `visual-qa-loop` | ditto |
+| TT #12 — loop closes | `lesson_loop_closes` | `visual-qa-loop` | the payoff strip for the observability arc |
+| TT #13 — BOOM | `lesson_monotonic_convergence` | `meta-examples` | the whole ledger is the evidence |
+| TT #14 — proof by self-reference | `lesson_proof_by_self_reference` | `meta-examples` | literally ME-everything |
 
-Mapping is authoritative here, confirmed in each strip's proposal, and editable as strips author and critique land.
+Mapping confirmed in each strip's `proposal.md`. Lessons registry is authoritative — see `lessons/spec.md`.
 
 ## Metadata emission
 
-Each strip's directory emits `METADATA.json` alongside its PNG:
+Each strip emits `METADATA.json` alongside its PNG:
 
 ```jsonc
 {
   "strip":              "TT #NN",
   "title":              "<short strip name>",
+
+  "lesson":             "<slug>",
+  "lesson_display":     "<display name from lessons/spec.md>",
+  "lesson_search_url":  "https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+<slug>&type=code",
+  "lesson_spec_url":    "https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/spec.md",
+
   "trace_spec":         "<name>",
   "trace_search_url":   "https://github.com/8007342/tlatoani-tales/search?q=%40trace+spec%3A<name>&type=code",
   "trace_spec_url":     "https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/<name>/spec.md",
+
   "concepts_taught":    ["Cxx"],
   "concepts_assumed":   ["Cxx"],
+  "reinforces_lessons": [],
+
   "alt_text":           "<accessible description of all three panels>",
-  "caption":            "Tlatoāni Tales #NN — <strip name> — @trace spec:<name>"
+  "caption":            "Tlatoāni Tales #NN — <title> — @Lesson <slug> / @trace spec:<name>"
 }
 ```
 
-Publishers (any social channel the strip appears on) include `trace_search_url` in the post body. The plate is the hook; the URL is the door.
+Publishers include both `lesson_search_url` and `trace_search_url` in post bodies. Two doors, same wisdom graph — casual readers take the lesson door, technical readers take the trace door.
 
-## URL format
+## URL forms
 
-- Search URL (the canonical "favorite query"):
-  `https://github.com/8007342/tlatoani-tales/search?q=%40trace+spec%3A<name>&type=code`
-- Direct spec URL:
-  `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/<name>/spec.md`
+| Form | Template | Surfaces |
+|---|---|---|
+| Lesson search | `https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+<slug>&type=code` | Every file/commit/caption citing this lesson |
+| Lesson registry | `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/spec.md` | The full coverage graph (specs, MEs, strips) for the lesson |
+| Trace search | `https://github.com/8007342/tlatoani-tales/search?q=%40trace+spec%3A<name>&type=code` | Every implementer/citer of the spec |
+| Spec direct | `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/<name>/spec.md` | The spec file itself |
 
-The search URL is preferred in captions because it surfaces the whole trace network around that spec — every file, script, and commit that cites it. That's the observability promise: one click, full context.
+Search URLs are preferred in captions — they surface the whole trace/lesson network with one click.
 
 ## Propagation cost
 
-Adding this to the style bible retroactively invalidates every strip's layout. Strip #01 (the ChatGPT demo) predates the trace plate and will be re-rendered locally once LoRAs + models are in place. This is the **first real propagation event** in the project — see `meta-examples/spec.md` ME11.
+Adding this spec retroactively invalidates every strip's layout. Strip #01 (ChatGPT demo) predates the plate and will be re-rendered once LoRAs + models are ready. First real propagation event — see `meta-examples/spec.md` ME11 (trace plate as in-frame observability), ME12 (this propagation), ME13 (lesson-trace CRDT).
 
-The project's own state right now is *not-yet-convergent-with-its-spec*. That's fine — it's a live demonstration of C07 (iteration with aim) and C12 (loop closes). The commit history will show the convergence.
+Repo is presently in a known-not-yet-convergent state; commit history will show the convergence. Live C07 + C12.
 
 ## QA integration
 
-New VLM checks (added to `visual-qa-loop/spec.md` as this spec lands):
+VLM checks (defined in `visual-qa-loop/spec.md`):
 
-- `plate.trace-present` — is there a bottom-left plate?
-- `plate.trace-legible` — does the plate text parse?
-- `plate.trace-content` — does the text match the declared `trace_spec` in proposal.md?
-- `plate.symmetry` — are the two plates visually matched as a pair?
+| Check | Enforces |
+|---|---|
+| `plate.trace-present` | A bottom-left plate exists with the `@trace` line |
+| `plate.trace-legible` | `@trace` text parses |
+| `plate.trace-content` | `@trace` text matches declared `trace_spec` in proposal.md |
+| `plate.lesson-present` | The plate has the `@Lesson` line |
+| `plate.lesson-legible` | `@Lesson` text parses |
+| `plate.lesson-slug-valid` | Slug is in the `lessons/spec.md` registry |
+| `plate.lesson-spec-aligned` | Declared spec appears in the lesson's coverage list |
+| `plate.symmetry` | Both plates visually matched as a pair |
 
 ## Trace
 
-`@trace spec:trace-plate, spec:style-bible, spec:visual-qa-loop, spec:meta-examples`
+`@trace spec:trace-plate, spec:style-bible, spec:visual-qa-loop, spec:lessons, spec:meta-examples`
+`@Lesson lesson_see_the_now`
