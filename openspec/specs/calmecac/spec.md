@@ -99,18 +99,30 @@ The refusal message is deliberately **non-apologetic**. It is part of the teachi
 
 ## Container image
 
-The image is a minimal static-file server. No server-side logic; Calmecac's "dynamic" feel is entirely client-side after the initial bundle load.
+The image is an **industry-standard tiny httpd** serving static files. No server-side logic; Calmecac's "dynamic" feel is entirely client-side after the initial bundle load.
+
+### Wisdom is knowing where to stop
+
+> *"We will not create our own http server, instead we will prefer the industry standard rock solid Alpine super secure httpd version, or even Fedora's tiny container with httpd. We do not always know better."* — author directive
+
+This is load-bearing. The rest of the stack this project authors is **Rust** (per the workspace-wide preference in `orchestrator/spec.md`); but serving static files over HTTP is a solved, battle-tested, decades-old problem. Writing a Rust HTTP server for Calmecac would be **noise masquerading as rigour** — fewer CVEs in the serving layer this year means a rock-solid upstream httpd, not a clever one-author reimplementation. The choice to stop at the trust boundary and use industrial-grade plumbing is itself a teachable meta-example (candidate, not canonized).
 
 | Aspect | Choice |
 |---|---|
-| Base | A minimal Fedora base image, matching the host's provenance for reader trust. |
-| Server | A lightweight static-file server (authoritative choice deferred to author — see **Open questions**). |
-| Source | `images/calmecac/` in the repo. |
-| Mounts | The build output is mounted read-only. The container itself is immutable at runtime. |
-| Hardening | Capabilities dropped to the minimum needed to serve files. No new privileges. User namespace keep-id where supported. Intentional — this is Season 2 substrate already in place. |
+| Base | `registry.fedoraproject.org/fedora-minimal:latest` (primary recommendation — see **Open questions** for the Alpine alternative). |
+| Server | The distribution-provided `httpd` package. No custom HTTP code, no Rust server crate, no hand-rolled listener. |
+| Source | `images/calmecac/Containerfile` in the repo. |
+| Mounts | `output/calmecac-bundle/` is bind-mounted **read-only** at `/usr/local/apache2/htdocs/` (or distro equivalent). The container itself is immutable at runtime. |
+| Hardening | `--read-only --cap-drop=ALL --security-opt=no-new-privileges --userns=keep-id --network=<bridge-bound-to-localhost>`. Port exposed only on `127.0.0.1:<port>`. Intentional — this is Season 2 substrate already in place. |
 | Name | `tlatoani-tales-viewer` — ASCII per **TB03**. |
 
-The container is ephemeral. State lives in the build output, not in the container. `--stop` and re-run is always safe.
+The container is ephemeral. State lives in the build output, not in the container. `--stop` and re-run is always safe. No writable paths inside the container; no code execution inside beyond the httpd itself.
+
+### Trust-boundary placement
+
+Calmecac runs in an **UNTRUSTED** hardened container — same trust model as every other non-Rust runtime in the project (per `isolation/spec.md`). The static content is produced by **trusted Rust code** (`tt-calmecac-indexer` — see **Concept index generation**) in the trusted toolbox, then mounted read-only into the UNTRUSTED httpd container. The boundary is clean: trusted code writes the bundle; untrusted runtime serves it. No write paths cross back; no code executes inside; network access is bound to localhost.
+
+This is the same shape the orchestrator uses for ComfyUI and ai-toolkit (untrusted Python runtimes in hardened tiny containers). Calmecac's risk is lower (static files, not image generation), but the *shape is identical* — and that consistency is itself the teaching.
 
 ## Build output — the reader-side bundle
 
@@ -162,7 +174,7 @@ Breadcrumbs are always present: *Comic → Lesson → Rule → …*. Back always
 
 Labels in the left column are **allowed** because the reader encountered them inside the comic. Labels in the right column are **forbidden** in UI copy because they belong to the substrate the project deliberately hides from the reader at this abstraction level.
 
-Copy-review discipline: every user-visible string in the bundle is reviewed against this table at build time. The index generator emits the strings it will render (tooltips, empty states, error messages, breadcrumbs) as a flat list; a check step greps forbidden tokens and fails the build.
+Copy-review discipline: every user-visible string in the bundle is reviewed against this table at build time. `tt-calmecac-indexer` emits the strings it will render (tooltips, empty states, error messages, breadcrumbs) as a flat list; a check step greps forbidden tokens and fails the build.
 
 ### Mobile-first
 
@@ -175,6 +187,21 @@ Most readers arrive from a phone link on `www.`. The Comic view must be usable f
 - Every chip is a real link with a legible label.
 - Contrast meets the project's accessibility floor (same as `style-bible` governs for panel palettes).
 - The viewer respects reduced-motion preferences — the Graph's force-directed layout freezes to a static arrangement when reduced-motion is requested.
+
+## Seasonal layering — progressive disclosure by curriculum
+
+Calmecac is not a static viewer. Its dashboards layer as the reader progresses through seasons, because the reader's questions evolve.
+
+| Reader state | Calmecac surfaces |
+|---|---|
+| **Has finished Season 1** (lessons S1-100 … S1-1500) | Observability of *how work progresses*: lesson graph, rule coverage, convergence history, tombstone trails, OpenSpec as CRDT. Answers *"how was this made?"* |
+| **Has finished Season 2** (future) | Adds observability of *how work progresses **safely***: trust-boundary visualization, container-graph diagram, privilege matrix (`--cap-drop=ALL`, `--userns=keep-id`, `--network=none` per role), offline-inference proof chart, verify-lint pass/fail timeline. Answers *"how do I know it's safe?"* |
+
+Season 2's views **reuse** the same indexer + bundle contract; they surface telemetry the orchestrator was already emitting (container start events, verify-lint results, network-mode flags on each render) — see `orchestrator/spec.md` and `isolation/spec.md`. No new build pipeline; just additional dashboards that *unhide* once the reader has crossed the Season-1→Season-2 threshold.
+
+The progressive-disclosure model is itself a small teaching: dashboards are for the reader you have now, not the reader you might eventually have. A Season-1 reader staring at a privilege matrix learns nothing; a Season-2 reader staring at it sees the proof that *"this comic was rendered using offline models"* isn't marketing.
+
+Gating: the viewer reads a simple `reader_progress` cookie (or query string for share-linking) to decide which tier of views to expose by default. Every dashboard stays **reachable** for the curious — gating is default-visible, not access-control.
 
 ## The three hotspots — from plate to view
 
@@ -235,6 +262,10 @@ The Graph is the literal demonstration of S1-1000 one level further up — the d
 
 `calmecac-index.json` is the single artefact the bundle reads on load. The index generator walks the repo at build time and produces a **concept-level** JSON description. This step is the abstraction boundary's enforcement point — it is where substrate vocabulary is *erased*, not where the UI learns to hide it.
 
+The generator is a **Rust crate**, `tt-calmecac-indexer`, living alongside the other `tt-*` crates in the orchestrator workspace (see `orchestrator/spec.md`). It is invoked by the `tt-calmecac` binary, which writes `output/calmecac-bundle/calmecac-index.json` and optionally invokes `scripts/tlatoāni_tales.sh` to start the viewer container. This resolves the earlier open question about index-generator language: the workspace preference is Rust wherever possible, and nothing in this generator requires a Python dependency to justify the exception.
+
+Shape (tentative, flagged in **Open questions**): `tt-calmecac-indexer` is a *library crate* (reusable by CI, by `tt-render`'s post-composition step, by future tooling); `tt-calmecac` is a *binary crate* that wires the library to argv and the launcher script. Splitting the responsibilities keeps the library pure — no argv, no stdout formatting, no process-spawning — and the binary thin.
+
 ### Inputs
 
 | Source | Role |
@@ -262,23 +293,23 @@ The index is a graph of typed nodes and typed edges, plus a per-node time series
 
 ### The substrate-erasing step
 
-This is the load-bearing part. The index generator reads substrate (markdown, paths, dates, hashes) and *emits concepts* (rules, lessons, changes). Filenames are parsed **and thrown away**; the index contains no path strings visible to the client. Change hashes are reduced to dates plus short human descriptions (taken from the first line of the change's summary). Author identities are dropped. The client never sees them because they do not exist in the file it loads.
+This is the load-bearing part. `tt-calmecac-indexer` reads substrate (markdown, paths, dates, hashes) and *emits concepts* (rules, lessons, changes). Filenames are parsed **and thrown away**; the index contains no path strings visible to the client. Change hashes are reduced to dates plus short human descriptions (taken from the first line of the change's summary). Author identities are dropped. The client never sees them because they do not exist in the file it loads.
 
-This placement is deliberate. The UI does not need to remember to hide substrate — the substrate never reaches it. A future UI rewrite could not accidentally leak a path, because the path is not in the bundle.
+This placement is deliberate. The UI does not need to remember to hide substrate — the substrate never reaches it. A future UI rewrite could not accidentally leak a path, because the path is not in the bundle. The erasure happens in trusted Rust, once, at build time — not in the untrusted httpd container, which only sees the already-abstracted bytes.
 
 ### When the index is regenerated
 
 | Trigger | Behaviour |
 |---|---|
-| A completed render run by `tt-render` | The orchestrator invokes the index generator as its final composition step, so Calmecac is always consistent with the last render. |
-| `scripts/tlatoāni_tales.sh --rebuild` | Rebuilds the image AND the index. |
-| Manual invocation of the index generator | Supported as an escape hatch — primarily for CI. |
+| A completed render run by `tt-render` | The orchestrator invokes `tt-calmecac-indexer` as its final composition step, so Calmecac is always consistent with the last render. |
+| `scripts/tlatoāni_tales.sh --rebuild` | Rebuilds the httpd container image AND re-runs `tt-calmecac` to refresh the index. |
+| Manual invocation of `tt-calmecac` | Supported as an escape hatch — primarily for CI. |
 
-The index generator is **not** a web service. It runs at build time, emits the file, exits. The bundle never reaches back.
+`tt-calmecac-indexer` is **not** a web service. It runs at build time, emits the file, exits. The bundle never reaches back. The httpd container, which *is* long-running, never invokes the indexer — the trust boundary is preserved.
 
 ## Integration with the orchestrator
 
-Calmecac composes downstream of `tt-render`. The orchestrator's render flow (see `orchestrator/spec.md`) ends with metadata emission for each rendered strip; immediately after, the orchestrator invokes the index generator. On a successful end-to-end run, the following are consistent:
+Calmecac composes downstream of `tt-render`. The orchestrator's render flow (see `orchestrator/spec.md`) ends with metadata emission for each rendered strip; immediately after, the orchestrator invokes `tt-calmecac-indexer` as a library call (same process) or `tt-calmecac` as a subprocess — both are Rust, both live in the same workspace. On a successful end-to-end run, the following are consistent:
 
 | Surface | State |
 |---|---|
@@ -335,7 +366,7 @@ The build process runs the following checks before producing the bundle. Failure
 | `index.no-hashes` | The emitted index contains no change-hash strings. Dates and concept-level summaries only. |
 | `launcher.single-instance` | The launcher script's state transitions are idempotent; running twice from a clean state yields the same state. |
 
-These checks are part of the index generator's output validation. They are not UI polish; they are the abstraction rule's teeth.
+These checks are part of `tt-calmecac-indexer`'s output validation. They are not UI polish; they are the abstraction rule's teeth — enforced in trusted Rust before a byte ever reaches the httpd container.
 
 ## Future convergence
 
@@ -343,7 +374,7 @@ Each step refines; none invalidate this spec's contracts.
 
 | Direction | Note |
 |---|---|
-| Live-watch mode | The local container grows a small live-reload facility watching the orchestrator's output; when a strip is re-rendered, the open viewer refreshes that strip. Useful for iteration. |
+| Live-watch mode | An optional future enhancement: the orchestrator publishes an SSE stream of render events, and the open viewer refreshes the affected strip in place. Because the MVP httpd container serves plain static files only (no SSE, no dynamic endpoints), this feature requires a **separate tiny reverse-proxy container** — still industry-standard, still a thing we do not author — to bridge the SSE stream in front of the static httpd. MVP does not block on this; the contract is specified now so the proxy's shape is already constrained. |
 | Historical strip diff view | Every strip acquires a per-change visual history. A reader picks two changes; the viewer shows the strip side by side. Another boring dashboard, in visual form. |
 | Multi-season navigation | Once Season 2 ships, the viewer's index gains a season dimension. No change to URL shape — `/lesson/S2-NNN` already fits. |
 | Lesson-authoring mode | Editing a lesson directly inside Calmecac. Blocked on Season 2's teaching of safe, sandboxed edits — the viewer will not learn to write before the comic teaches how to write safely. |
@@ -351,19 +382,19 @@ Each step refines; none invalidate this spec's contracts.
 
 ## Open questions for author
 
-The following load-bearing choices are judgment calls made within this spec. Each deserves the author's eye before canonization.
+The following load-bearing choices are judgment calls made within this spec. Each deserves the author's eye before canonization. The previous "static-file server choice" and "index generator language" questions are **resolved** (industry-standard httpd in a hardened container; Rust, specifically `tt-calmecac-indexer`).
 
-1. **Static-file server choice.** The spec describes a minimal static server in the container, without picking one. The three plausible candidates (the default Apache offering; a small Caddy instance; a small Nginx instance) differ slightly in image size, configuration ergonomics, and default security posture. The author should pick one.
-2. **Default local port.** Pick `8088`, but any free port in the 8000s is fine. Does the author have a project-wide port convention?
-3. **Bundle path.** `output/calmecac-bundle/` follows the `output/` convention for generated artefacts. Is `output/` the right bucket, or does the author prefer a sibling directory (e.g. `site/`, `dist/`) to keep the artefact categories distinct?
-4. **Containerfile location.** `images/calmecac/` is proposed as a sibling of `scripts/`. The author may prefer `scripts/calmecac/` (to colocate container source with launcher), or a top-level `container/` directory.
-5. **Index generator language.** Sharing the orchestrator's Python environment is simple and keeps the project's runtime count low. Alternately, a small Node or Deno tool would colocate better with the PWA bundle's client script. The author's preference on runtime count vs. colocation decides this.
-6. **Graph rendering library.** A dependency-light SVG renderer keeps the bundle small and the "concept-only" contract easy to enforce in code review. A mainstream graph-layout library gives a richer Graph tab with less bespoke code. The author should weigh bundle weight vs. implementation effort.
+1. **Default local port.** Pick `8088`, but any free port in the 8000s is fine. Does the author have a project-wide port convention?
+2. **Bundle path.** `output/calmecac-bundle/` follows the `output/` convention for generated artefacts. Is `output/` the right bucket, or does the author prefer a sibling directory (e.g. `site/`, `dist/`) to keep the artefact categories distinct?
+3. **Containerfile location.** `images/calmecac/` is proposed as a sibling of `scripts/`. The author may prefer `scripts/calmecac/` (to colocate container source with launcher), or a top-level `container/` directory.
+4. **Graph rendering library.** A dependency-light SVG renderer keeps the bundle small and the "concept-only" contract easy to enforce in code review. A mainstream graph-layout library gives a richer Graph tab with less bespoke code. The author should weigh bundle weight vs. implementation effort.
+5. **Base image: Alpine vs Fedora-minimal.** The spec recommends **`registry.fedoraproject.org/fedora-minimal:latest`** for the httpd container. Rationale: the project's hosts are Fedora Silverblue, the trusted toolbox is Fedora, the orchestrator's UNTRUSTED runtime targets are specced as "hardened tiny Alpine or Fedora-minimal" (per `isolation/spec.md`), and staying on one base family per trust zone reduces the attack-surface footprint the author has to track mentally. The Alpine alternative (`alpine:latest` + `apache2` package, `~5 MB` base) is strictly smaller and is a perfectly defensible choice; the author picks. Either way, we do not author the server.
+6. **One crate or two.** Current lean: `tt-calmecac-indexer` is a **library crate** (pure: inputs → index, no argv, no I/O beyond spec-reading); `tt-calmecac` is a **binary crate** that wires the library to argv and may also launch the httpd container via the script. Alternative: one crate with an optional binary target. The author decides; the two-crate shape is the Rust-workspace default and keeps the library reusable.
 
 Where the spec does not prescribe one of these choices, Calmecac is still buildable from this contract. The open questions are refinements, not gaps.
 
 ## Trace
 
-`@trace spec:calmecac, spec:orchestrator, spec:trace-plate, spec:visual-qa-loop, spec:lessons, spec:tlatoāni-spelling, spec:licensing, spec:meta-examples, spec:seasons, spec:lesson-driven-development`
+`@trace spec:calmecac, spec:orchestrator, spec:isolation, spec:trace-plate, spec:visual-qa-loop, spec:lessons, spec:tlatoāni-spelling, spec:licensing, spec:meta-examples, spec:seasons, spec:lesson-driven-development`
 `@Lesson S1-1000`
 `@Lesson S1-1500` *(proof-by-self-reference — a viewer that observes the project by being observable itself)*
