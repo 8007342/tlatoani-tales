@@ -1,20 +1,32 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tlatoāni Tales — a serialized 3-panel webcomic that teaches AI-collaborative
+  engineering discipline through humor. The comic itself is produced by the
+  same discipline it teaches: every strip is driven by OpenSpec, every panel
+  is content-addressed, every re-render is deterministic, every mutation
+  propagates through dependencies.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Convergence layers (from slow to fast):
+    1. git history          — Lamport clock for spec evolution
+    2. openspec/specs/      — canon: style, characters, symbols, curriculum, arc
+    3. strips/NN-slug/      — per-strip scripts, panel prompts, cached hashes
+    4. cache/               — content-addressed rendered panels (CRDT G-Set)
+    5. output/              — composited Tlatoani_Tales_NNN.png (rebuilt each run)
+
+  Image generation runtime lives in tools/ (gitignored, per-machine):
+    - ComfyUI in tools/ComfyUI
+    - Models in tools/ComfyUI/models/
+    - LoRAs trained per character in tools/loras/
+
+  Every change MUST add @trace spec:<name> annotations linking implementation
+  to the governing spec. Log/commit/script alike.
+
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - State the reader-facing lesson explicitly — what does the reader walk away with?
+    - Include "Dependencies": which concept-curriculum nodes must have landed first
+  tasks:
+    - Break tasks by panel (panel 1, 2, 3, composite, review)
+    - Generation tasks must reference the exact seed + model + lora hash used
