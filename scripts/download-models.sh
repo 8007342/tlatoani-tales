@@ -27,28 +27,14 @@ mkdir -p \
 
 # -----------------------------------------------------------------------------
 # FLUX.1-schnell — base model (Apache 2.0)
-# Split into: transformer (unet), VAE, and two text encoders (clip_l + t5xxl).
-# Using fp8 T5 variant to stay well inside 24GB VRAM.
+# The Comfy-Org fp8 variant is the ALL-IN-ONE checkpoint: transformer, VAE,
+# and text encoders baked together (~17GB). Fits comfortably in 24GB VRAM
+# and avoids the license-gated black-forest-labs/FLUX.1-schnell repo.
 # -----------------------------------------------------------------------------
-log "downloading FLUX.1-schnell transformer (fp8, ~12GB)"
+log "downloading FLUX.1-schnell all-in-one fp8 (~17GB)"
 hf download Comfy-Org/flux1-schnell \
   flux1-schnell-fp8.safetensors \
   --local-dir "${MODELS_DIR}/checkpoints"
-
-log "downloading FLUX VAE (~335MB)"
-hf download black-forest-labs/FLUX.1-schnell \
-  ae.safetensors \
-  --local-dir "${MODELS_DIR}/vae"
-
-log "downloading CLIP-L (~250MB)"
-hf download comfyanonymous/flux_text_encoders \
-  clip_l.safetensors \
-  --local-dir "${MODELS_DIR}/clip"
-
-log "downloading T5-XXL fp8 (~4.9GB)"
-hf download comfyanonymous/flux_text_encoders \
-  t5xxl_fp8_e4m3fn.safetensors \
-  --local-dir "${MODELS_DIR}/clip"
 
 # -----------------------------------------------------------------------------
 # Qwen-Image — text-rendering specialist for speech bubbles + episode plate.
