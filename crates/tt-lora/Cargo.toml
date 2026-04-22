@@ -1,0 +1,17 @@
+[package]
+name = "tt-lora"
+description = "Tlatoāni Tales — trusted-zone wrapper around the ai-toolkit LoRA trainer subprocess. Computes the weights' SHA-256 inside the trusted zone so the untrusted trainer cannot lie about its output."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-events = { path = "../tt-events" }
+tt-hashing = { path = "../tt-hashing" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

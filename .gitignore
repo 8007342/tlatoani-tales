@@ -5,6 +5,10 @@ tools/
 output/
 cache/
 
+# Rust
+target/
+*.rs.bk
+
 # Python
 .venv/
 __pycache__/

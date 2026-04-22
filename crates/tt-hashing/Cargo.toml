@@ -1,0 +1,15 @@
+[package]
+name = "tt-hashing"
+description = "Tlatoāni Tales — canonicalization (NFC, LF, UTF-8, trim) and SHA-256 computation for content addressing."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+sha2 = { workspace = true }
+hex = { workspace = true }
+unicode-normalization = { workspace = true }
+thiserror = { workspace = true }

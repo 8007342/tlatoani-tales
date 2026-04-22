@@ -1,0 +1,16 @@
+[package]
+name = "tt-compose"
+description = "Tlatoāni Tales — image composition. Stitches panels, composites the Qwen-Image title plate over FLUX output, draws the chrome trace+lesson and episode plates."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tokio = { workspace = true }
+image = { workspace = true }
+imageproc = { workspace = true }
+ab_glyph = { workspace = true }
+thiserror = { workspace = true }

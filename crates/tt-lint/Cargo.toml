@@ -1,0 +1,17 @@
+[package]
+name = "tt-lint"
+description = "Tlatoāni Tales — verify subcommand. License coverage, trace-presence, Tlatoāni spelling, plate declaration, slug-in-registry, spec-in-lesson-coverage, isolation flag source-of-truth."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-specs = { path = "../tt-specs" }
+tokio = { workspace = true }
+walkdir = { workspace = true }
+glob = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }

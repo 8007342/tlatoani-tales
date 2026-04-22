@@ -1,0 +1,17 @@
+[package]
+name = "tt-calmecac-indexer"
+description = "Tlatoāni Tales — builds output/calmecac-bundle/calmecac-index.json. Walks specs + strips + git log, erases substrate, emits the concept-level graph that the viewer loads on startup."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-specs = { path = "../tt-specs" }
+tokio = { workspace = true }
+walkdir = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

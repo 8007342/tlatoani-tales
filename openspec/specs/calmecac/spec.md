@@ -333,6 +333,23 @@ Calmecac emits its own observability signals. This is deliberate meta-recursion 
 
 All signals stay **local**. No external telemetry, no third-party analytics, no outbound network beyond strip art and the index itself. Reader privacy is a feature — and, again, a Season 2 seed.
 
+## Commit-history observability — the conversation made observable
+
+Calmecac's third deep-disclosure layer (after Lesson views and Rule views) is the **Conversation** view: a browseable projection of the repo's commit history, filtered by `@trace spec:X` / `@Lesson S1-NNN` tags. The author's discussion with the tooling becomes a commit trail; that trail becomes a spec edit; that spec edit becomes a panel regeneration. Every layer is linked. Calmecac surfaces the full chain so a reader can follow **not only what was taught, but the argument that produced the teaching**.
+
+| Entry point | Opens |
+|---|---|
+| Rule view → "Convergence history" | Per-Rule timeline of commits with `@trace spec:<this-rule>`, each point click-through to a minimal commit summary. |
+| Lesson view → "Argument trail" | Per-Lesson timeline of commits with `@Lesson S1-NNN` OR `@trace spec:<any-spec-in-lesson-coverage>`, presenting the threaded evolution of the teaching. |
+| Convergence tab → "Changes across the repo" | A repo-wide commit log, concept-level — each commit summarized by the specs/lessons it touched, no file paths, no hashes. |
+| Strip view → "How this strip arrived at this state" | Commits that affected any input to this strip's panel_hash — lesson spec, style bible, character canon, LoRA manifest, the strip's own proposal. |
+
+The UI still respects the abstraction rule: **no raw commit hashes in display text** (summaries are rendered as concept-level change descriptions), **no file paths**, **no markdown/filename leakage**. Commits are "changes" in the reader's vocabulary; they link outward to GitHub only if the reader explicitly asks, via an "open on GitHub" action that is itself a teachable moment about traceability.
+
+The indexer is responsible for this projection: `tt-calmecac-indexer` walks `git log --follow` across all spec files and strip artefacts, extracts `@trace` / `@Lesson` tags from commit messages, and writes a `commits` section into `calmecac-index.json` with per-commit concept-level summaries. Commit messages that carry neither tag are still listed but pushed to a secondary tier — they're part of the history, but they did not shape a teaching they are tagged against.
+
+This closes the loop on the author's workflow model: **discussion → spec update → commit → pipeline run → panel → strip → Calmecac view of the commit that started it all**. The observability surface now covers every layer of how the comic was made, including the conversation that made it.
+
 The author uses the in-viewer panel to see which lessons and rules readers dwell on during development. If a chip is never clicked, that is telemetry. If a graph node is hovered for seconds, that is telemetry. The reader's experience is the input to the next iteration of the viewer — the loop, closed, one more time.
 
 ## URL shape

@@ -1,0 +1,32 @@
+[package]
+name = "tt-render"
+description = "Tlatoāni Tales — the orchestrator CLI. Parses args, sets up tracing + event bus, dispatches subcommands, exits with the documented codes."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "tt-render"
+path = "src/main.rs"
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-events = { path = "../tt-events" }
+tt-specs = { path = "../tt-specs" }
+tt-hashing = { path = "../tt-hashing" }
+tt-comfy = { path = "../tt-comfy" }
+tt-qa = { path = "../tt-qa" }
+tt-compose = { path = "../tt-compose" }
+tt-metadata = { path = "../tt-metadata" }
+tt-telemetry = { path = "../tt-telemetry" }
+tt-lint = { path = "../tt-lint" }
+tt-lora = { path = "../tt-lora" }
+tt-calmecac-indexer = { path = "../tt-calmecac-indexer" }
+tokio = { workspace = true }
+futures = { workspace = true }
+clap = { workspace = true }
+indicatif = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }

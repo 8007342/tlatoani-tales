@@ -1,0 +1,20 @@
+[package]
+name = "tt-calmecac"
+description = "Tlatoāni Tales — Calmecac CLI. Builds the concept index, best-effort starts/stops the viewer container. Silverblue-only for serve commands."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "tt-calmecac"
+path = "src/main.rs"
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-calmecac-indexer = { path = "../tt-calmecac-indexer" }
+tokio = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }

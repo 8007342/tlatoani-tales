@@ -1,0 +1,18 @@
+[package]
+name = "tt-telemetry"
+description = "Tlatoāni Tales — tracing subscriber + JSONL sink. Every accountability event carries spec and lesson fields; feeds Calmecac's convergence dashboards."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tt-events = { path = "../tt-events" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

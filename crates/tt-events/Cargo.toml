@@ -1,0 +1,13 @@
+[package]
+name = "tt-events"
+description = "Tlatoāni Tales — typed event bus. One enum per domain; every event carries an optional spec_tag and lesson_tag for accountability."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tokio = { workspace = true }
+serde = { workspace = true }

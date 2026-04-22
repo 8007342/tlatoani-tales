@@ -1,0 +1,7 @@
+# Pin the toolchain to stable. Tlatoāni Tales never needs nightly —
+# correctness lives in the type system, not in feature flags.
+#
+# @trace spec:orchestrator
+
+[toolchain]
+channel = "stable"

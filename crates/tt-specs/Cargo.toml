@@ -1,0 +1,17 @@
+[package]
+name = "tt-specs"
+description = "Tlatoāni Tales — OpenSpec + strip proposal loader. Parses YAML frontmatter + markdown bodies into a typed spec graph."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+pulldown-cmark = { workspace = true }
+walkdir = { workspace = true }
+thiserror = { workspace = true }
