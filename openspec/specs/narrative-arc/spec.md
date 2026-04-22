@@ -12,6 +12,7 @@ The dramatic shape of the season. Sits above `concept-curriculum` (which is the 
 - **Acts 4–7 (TT #05–08)**: Structural awakening. Covi starts asking questions. Humor shifts from "Covi is wrong" to "Covi is trying" — we laugh *with* them now.
 - **Acts 8–11 (TT #09–12)**: Fluency. Covi starts recognizing patterns before Tlatoāni names them. Tlatoāni begins to smile more, speak less.
 - **Finale (TT #13)**: Covi *teaches the reader* by asking the AI a phrase. Tlatoāni is present but quiet. The reader realizes they could ask the same thing.
+- **Coda (TT #14)**: a skeptic voice enters off-panel — "You can't apply this anywhere." Covi answers cheerfully: "Of course you can! This comic was!" Panel 3 shows the repo URL rendered as a small scroll in Tlatoāni's notebook. This strip is the proof by self-reference: the artefact teaches by existing.
 
 ### Tlatoāni's arc
 

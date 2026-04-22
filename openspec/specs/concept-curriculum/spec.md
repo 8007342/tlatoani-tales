@@ -27,6 +27,7 @@ After each strip, the reader leaves with a *trivial yet devastating* improvement
 | C11 | Meaning is operable | "You can add, multiply, and compare shapes. That's engineering with eyes open." | C10 |
 | C12 | The loop closes | "Last iteration's meaning is this iteration's input. Now you're not guessing — you're converging." | C11 |
 | C13 | BOOM — monotonic convergence | "Ask your AI for monotonic_convergence. You already earned it." | C01–C12 |
+| C14 | Proof by self-reference | "Not sure it applies to your work? This comic was made that way. Repo is right there." | C13 |
 
 ## Strip mapping (initial — subject to revision)
 
@@ -45,6 +46,7 @@ After each strip, the reader leaves with a *trivial yet devastating* improvement
 | TT #11 | C11 | Covi tries to add two curves; Tlatoāni shows the sum is a new meaning |
 | TT #12 | C12 | The curve from last week becomes this week's prompt |
 | TT #13 | C13 | Covi casually says "AI, monotonic_convergence please" — it just works — Tlatoāni nods |
+| TT #14 | C14 | Skeptic: "You can't apply this anywhere." Covi: "Of course you can! This comic was!" — GitHub URL in frame |
 
 Concepts may split across multiple strips as we go. Mapping is part of the spec and updates in place.
 
