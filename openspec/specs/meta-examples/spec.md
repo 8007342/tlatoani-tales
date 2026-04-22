@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A running catalogue of places in this project where curriculum concepts (C01–C14) are instantiated **in the substrate** — not as comic content, but as structural decisions. Each meta-example is a convergence-in-weird-places moment we can cite in strip dialogue, in TT #14's proof-by-self-reference, and in the running commentary of the README.
+A running catalogue of places in this project where curriculum concepts (C01–C15) are instantiated **in the substrate** — not as comic content, but as structural decisions. Each meta-example is a convergence-in-weird-places moment we can cite in strip dialogue, in TT 15/15's proof-by-self-reference, and in the running commentary of the README.
 
 When a reader objects *"but that only applies to code, not my real work"*, we point at this table. The project is a Rosetta stone: every piece of it is a different domain expressing the same core ideas.
 
@@ -40,7 +40,11 @@ When a reader objects *"but that only applies to code, not my real work"*, we po
 
 ## Why this spec exists
 
-The thesis of Tlatoāni Tales is that *monotonic convergence* is not a math incantation — it's a shape you can see in many places. This ledger is the empirical evidence. Without it, the finale (TT #13–#14) is a claim. With it, the finale is a citation.
+The thesis of Tlatoāni Tales is that *monotonic convergence* is not a math incantation — it's a shape you can see in many places. This ledger is the empirical evidence. Without it, the finale (TT 14/15–15/15) is a claim. With it, the finale is a citation.
+
+## Candidate meta-example (pending author curation)
+
+The April 2026 renumbering of Season 1 — retiring `S1-950`, `S1-1000-shape-has-meaning`, `S1-1100-meaning-is-operable`, `S1-1200-loop-closes`, `S1-1300-monotonic-convergence`, and `S1-1400-proof-by-self-reference` in favour of strict sequential `S1-100` through `S1-1500` — is a candidate meta-example about *"sequential thought requires sequential presentation."* The season whose pedagogy is sequential thought could not in good faith ship with `S1-950` living mid-ladder; the form had to match the content. The renumbering is legible in the tombstone rows of `lessons/spec.md` and in git history. **Flagged as a candidate, not canonized here** — awaits author decision on whether it merits a stable `ME##` slot.
 
 ## Trace
 

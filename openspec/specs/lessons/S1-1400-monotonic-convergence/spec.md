@@ -1,4 +1,4 @@
-# S1-1300 — Monotonic convergence
+# S1-1400 — Monotonic convergence
 
 ## Abstract
 
@@ -7,15 +7,15 @@ Ask your AI for it. You already earned it. The phrase is a punchline for a reade
 ## Position
 
 - Season: S1
-- Number: 1300
-- Predecessors: S1-100 through S1-1200 (every prior lesson in the season)
-- Successors: S1-1400-proof-by-self-reference
+- Number: 1400
+- Predecessors: S1-100 through S1-1300 (every prior lesson in the season)
+- Successors: S1-1500-proof-by-self-reference
 
 ## References in this project
 
 _(Populated as coverage accretes. Empty is legal.)_
 
-- `openspec/specs/concept-curriculum/spec.md` (C13)
+- `openspec/specs/concept-curriculum/spec.md` (C14)
 - `openspec/specs/meta-examples/spec.md` (the whole ledger is the evidence)
 
 ## Script
@@ -36,5 +36,5 @@ The reader already has the intuition — specs that reconcile, commits that orde
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-1300-monotonic-convergence`
-`@Lesson S1-1300`
+`@trace spec:lessons, spec:S1-1400-monotonic-convergence`
+`@Lesson S1-1400`

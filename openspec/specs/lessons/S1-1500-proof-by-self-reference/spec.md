@@ -1,4 +1,4 @@
-# S1-1400 — Proof by self-reference
+# S1-1500 — Proof by self-reference
 
 ## Abstract
 
@@ -7,8 +7,8 @@ This comic was made that way. The artefact teaches by existing — the repo you'
 ## Position
 
 - Season: S1
-- Number: 1400
-- Predecessors: S1-1300-monotonic-convergence (and transitively all of S1-100 through S1-1200)
+- Number: 1500
+- Predecessors: S1-1400-monotonic-convergence (and transitively all of S1-100 through S1-1300)
 - Successors: — (season finale; future seasons may cite this lesson across boundaries)
 
 ## References in this project
@@ -16,7 +16,7 @@ This comic was made that way. The artefact teaches by existing — the repo you'
 _(Populated as coverage accretes. Empty is legal.)_
 
 - `openspec/specs/meta-examples/spec.md` (ME01–ME12 — the entire ledger is the proof)
-- `openspec/specs/concept-curriculum/spec.md` (C14)
+- `openspec/specs/concept-curriculum/spec.md` (C15)
 - `openspec/specs/narrative-arc/spec.md`
 - **All specs in this repo** (every one is an instance)
 
@@ -38,5 +38,5 @@ The skeptic's objection — "that only applies to code, not my real work" — di
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-1400-proof-by-self-reference`
-`@Lesson S1-1400`
+`@trace spec:lessons, spec:S1-1500-proof-by-self-reference`
+`@Lesson S1-1500`

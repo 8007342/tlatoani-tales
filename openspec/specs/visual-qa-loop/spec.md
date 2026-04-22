@@ -4,17 +4,18 @@
 
 Every rendered panel is critiqued by a local vision-language model against the canon specs, scored for drift, and re-rendered if drift exceeds a threshold. The VLM's output is **telemetry** — structured measurement of whether the panel converges on the spec.
 
-This spec is also a live demonstration of curriculum concepts C08–C12:
+This spec is also a live demonstration of curriculum concepts C08–C13:
 
 | Concept | How this spec demonstrates it |
 |---|---|
 | C08 — observability > unit tests | Unit tests can't see a double-tail. Observability can. |
 | C09 — observability > just logs | We emit a structured drift report, not a raw VLM transcript. |
-| C10 — telemetry = meaning of logs | The drift *score* is the meaning; the raw VLM output is the log. |
-| C11 — meaning is operable | Drift scores aggregate across panels, trend over iterations, gate cache promotion. |
-| C12 — the loop closes | The drift report becomes the prompt addendum for the next render. |
+| C10 — dashboards must add observability | The drift report surfaces relationships (check → note → reroll addendum), not just numbers. |
+| C11 — telemetry = meaning of logs | The drift *score* is the meaning; the raw VLM output is the log. |
+| C12 — meaning is operable | Drift scores aggregate across panels, trend over iterations, gate cache promotion. |
+| C13 — the loop closes | The drift report becomes the prompt addendum for the next render. |
 
-When TT #08–#12 ship, the strips can point readers at this spec and say: *the comic you are reading was produced this way.*
+When TT 08/15–13/15 ship, the strips can point readers at this spec and say: *the comic you are reading was produced this way.*
 
 ## Runtime
 
@@ -33,7 +34,7 @@ For each rendered panel, emit a JSON drift report:
 ```jsonc
 {
   "panel_hash": "sha256:...",
-  "strip": "TT #03",
+  "strip": "TT 03/15",
   "panel": 2,
   "iteration": 1,
   "model": "moondream:2b",
@@ -44,6 +45,7 @@ For each rendered panel, emit a JSON drift report:
     { "id": "covi.good-mood",           "spec": "character-canon", "pass": false, "confidence": 0.71, "note": "expression reads dejected" },
     { "id": "palette.paper-bg",         "spec": "style-bible",     "pass": true,  "confidence": 0.88 },
     { "id": "plate.episode.position",   "spec": "style-bible",     "pass": true,  "confidence": 0.93 },
+    { "id": "plate.episode-total-format", "spec": "trace-plate",   "pass": true,  "confidence": 0.94, "note": "episode plate reads 'Tlatoāni Tales NN/15' — the /TOTAL denominator is present, not a bare #NN" },
     { "id": "plate.trace-present",      "spec": "trace-plate",     "pass": true,  "confidence": 0.91 },
     { "id": "plate.trace-legible",      "spec": "trace-plate",     "pass": true,  "confidence": 0.89 },
     { "id": "plate.trace-content",      "spec": "trace-plate",     "pass": true,  "confidence": 0.94, "note": "matches proposal.md trace_spec" },

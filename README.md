@@ -24,7 +24,7 @@ The comic ships in strips. Each strip is one lesson. The ladder climbs from *cle
 
 Every rendered panel is content-addressed. Every spec change is a git commit — a Lamport tick. If a property mutates, every panel that referenced it is invalidated and re-rendered. The comic is produced by the discipline it teaches. That's the point.
 
-## Two licenses (yes, on purpose — see TT #14)
+## Two licenses (yes, on purpose — see TT 15/15)
 
 - **Code** — [GPL-3.0-or-later](./LICENSE). Shell, Python, any functional tooling.
 - **Everything else** — [CC BY-SA 4.0](./LICENSE-ART). Markdown, strip scripts, comic art, reference sheets, specs.
@@ -34,6 +34,6 @@ The mapping is a tiny CRDT. New file types get new rules; rules don't conflict b
 
 ## Status
 
-Work in progress. Strip #01 shipped as a demo from ChatGPT's image mode; strips #02–#14 are being authored and rendered from the specs in this repo, on a local ComfyUI + FLUX.1-schnell + Qwen-Image stack with per-character LoRAs.
+Work in progress. Strip 01/15 shipped as a demo from ChatGPT's image mode; strips 02/15–15/15 are being authored and rendered from the specs in this repo, on a local ComfyUI + FLUX.1-schnell + Qwen-Image stack with per-character LoRAs.
 
-Watch the commit history. It's the same Lamport clock the comic will eventually name in panel 3 of TT #04.
+Watch the commit history. It's the same Lamport clock the comic will eventually name in panel 3 of TT 04/15.

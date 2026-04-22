@@ -9,7 +9,7 @@ Raw logs aren't truth. They're material for it. A log line is a grain; observabi
 - Season: S1
 - Number: 900
 - Predecessors: S1-800-see-the-now
-- Successors: S1-950-dashboards-must-add-observability, S1-1000-shape-has-meaning
+- Successors: S1-1000-dashboards-must-add-observability, S1-1100-shape-has-meaning
 
 ## References in this project
 

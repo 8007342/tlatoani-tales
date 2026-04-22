@@ -11,6 +11,8 @@ Tlatoāni Tales is planned as a multi-season arc. A **season** is a coherent the
 
 Two seasons are planned. **MVP ships Season 1 only.** Season 2 is canonical forward-planning — its structural dependencies (Silverblue-only scripts, podman, toolbox isolation, drop-privileges flags) are already honored by this repo's operational discipline, so that when Season 2 lands it can teach by pointing at its own substrate. Proof by self-reference, rehearsed.
 
+**Season 1 converged at 15 lessons.** TOTAL=15 is now stable; episode plates display `NN/15`. This is itself the convergence signal — when the season's lesson count stops moving, the denominator may appear on the plates. Future seasons will follow the same pattern: bare number during authoring, `NN/TOTAL` once the season's total is stable.
+
 ## Season numbering format
 
 Every published lesson receives an ID of the form:
@@ -20,18 +22,12 @@ S<n>-<number>-<slug>
 ```
 
 - `S<n>` — season integer (`S1`, `S2`, …).
-- `<number>` — lesson index, stepped by **100** starting at **100** (`100, 200, 300, …, 1400, …`).
+- `<number>` — lesson index, stepped by **100** starting at **100** (`100, 200, 300, …, 1500, …`).
 - `<slug>` — the lesson's kebab-case phrase (the humane hook; see `lessons/spec.md`).
 
-**Insertion rule.** A new lesson may land at *any* decimal between two existing numbers. Examples:
+**Season 1 uses strict sequential hundreds** — `S1-100` through `S1-1500`, no decimal gaps. Sequential thought is itself Season 1's pedagogy, and the numbering was made to match.
 
-| Insert | Between | Why |
-|---|---|---|
-| `S1-150` | `S1-100` and `S1-200` | New beat belongs after "volatile is dangerous" but before "save means findable". |
-| `S1-950` | `S1-900` and `S1-1000` | Dashboards-must-add-observability lesson (this turn's decision). |
-| `S2-250` | `S2-200` and `S2-300` | Any future Season 2 insertion. |
-
-Gaps of 100 exist precisely to absorb insertions without renumbering. Finer insertions (S1-910, S1-925) are legal but discouraged unless the author judges them necessary.
+**Decimal insertion** (e.g. `S1-150`, `S1-925`) is a reserved future mechanism. It will only appear once a future lesson *teaches* what decimal insertion means — i.e. when inserting a step without renumbering becomes the point of a lesson. No such lesson exists in Season 1. Authors do **not** insert decimal numbers today; a new beat between two existing lessons triggers a renumbering sweep (as happened April 2026 — see the tombstone rows in `lessons/spec.md`).
 
 **ID stability.** Once a lesson ID is published (merged to main), **it never reuses**. A retired ID becomes a tombstone — see `meta-examples/spec.md` ME10 and `lessons/spec.md` tombstone rules. This is the same CRDT discipline the comic teaches (C05).
 
@@ -41,23 +37,23 @@ Gaps of 100 exist precisely to absorb insertions without renumbering. Finer inse
 
 | ID | Slug | Strip | Source concept |
 |---|---|---|---|
-| `S1-100` | `volatile-is-dangerous` | TT #01 | C01 |
-| `S1-200` | `save-means-findable` | TT #02 | C02 |
-| `S1-300` | `memory-lives-in-history` | TT #03 | C03 |
-| `S1-400` | `discrete-time` | TT #04 | C04 |
-| `S1-500` | `edits-that-reconcile` | TT #05 | C05 |
-| `S1-600` | `ask-in-writing` | TT #06 | C06 |
-| `S1-700` | `loops-need-aim` | TT #07 | C07 |
-| `S1-800` | `see-the-now` | TT #08 | C08 |
-| `S1-900` | `logs-are-ingredients` | TT #09 | C09 |
-| `S1-950` | `dashboards-must-add-observability` | *TBD — inserts between TT #09 and TT #10* | (new — observability-of-observability) |
-| `S1-1000` | `shape-has-meaning` | TT #10 | C10 |
-| `S1-1100` | `meaning-is-operable` | TT #11 | C11 |
-| `S1-1200` | `loop-closes` | TT #12 | C12 |
-| `S1-1300` | `monotonic-convergence` | TT #13 | C13 |
-| `S1-1400` | `proof-by-self-reference` | TT #14 | C14 |
+| `S1-100` | `volatile-is-dangerous` | TT 01/15 | C01 |
+| `S1-200` | `save-means-findable` | TT 02/15 | C02 |
+| `S1-300` | `memory-lives-in-history` | TT 03/15 | C03 |
+| `S1-400` | `discrete-time` | TT 04/15 | C04 |
+| `S1-500` | `edits-that-reconcile` | TT 05/15 | C05 |
+| `S1-600` | `ask-in-writing` | TT 06/15 | C06 |
+| `S1-700` | `loops-need-aim` | TT 07/15 | C07 |
+| `S1-800` | `see-the-now` | TT 08/15 | C08 |
+| `S1-900` | `logs-are-ingredients` | TT 09/15 | C09 |
+| `S1-1000` | `dashboards-must-add-observability` | TT 10/15 | C10 |
+| `S1-1100` | `shape-has-meaning` | TT 11/15 | C11 |
+| `S1-1200` | `meaning-is-operable` | TT 12/15 | C12 |
+| `S1-1300` | `loop-closes` | TT 13/15 | C13 |
+| `S1-1400` | `monotonic-convergence` | TT 14/15 | C14 |
+| `S1-1500` | `proof-by-self-reference` | TT 15/15 | C15 |
 
-`S1-950` is the canonical example of the insertion rule: the author recognized mid-arc that *dashboards without observability* is a distinct teaching beat, not a sub-case of `logs-are-ingredients` (S1-900) or `shape-has-meaning` (S1-1000). It earned its own ID. Its comic strip number is TBD; it will likely slot between TT #09 and TT #10 without renumbering the existing strips.
+Season 1 sits at 15 lessons and has converged on strict sequential hundreds (`S1-100` through `S1-1500`, step of 100, no decimal gaps). The April 2026 renumbering event — visible in `lessons/spec.md`'s tombstone table — retired the earlier stepped-with-decimals arrangement (where `S1-950` held the dashboards beat) so that Season 1's *form* teaches its *content*: the reader sees a ladder of neatly sequential steps because the season's own pedagogy is *sequential thought*.
 
 ## Season 2 sketch
 
@@ -78,12 +74,12 @@ Season 2 teaches the shift from "just let the AI do whatever" to scoped, reversi
 
 | Layer | MVP includes | MVP defers |
 |---|---|---|
-| Season 1 | All 15 lessons (`S1-100` … `S1-1400`, including `S1-950`). Strips, prompts, renders, lesson specs, coverage. | — |
+| Season 1 | All 15 lessons (`S1-100` … `S1-1500`, strict sequential hundreds). Strips, prompts, renders, lesson specs, coverage. | — |
 | Season 2 | Seasons registry entries as **forthcoming** stubs (above). | Per-lesson specs, strips, prompts, renders. |
 | Calmecac viewer | Ships with Season 1 content. | Season 2 content surfaces only when lessons land. |
 | Repo operational stance | Already Season-2-compliant: Silverblue-only scripts, podman/toolbox isolation, drop-privileges flags, no host mutation. | Season 2 *content* that will eventually teach using this very repo as the example. |
 
-The repo's operational discipline being Season-2-compliant *before* Season 2 lessons are written is intentional — it's the same move the project already makes at the Season 1 finale (TT #14, `S1-1400`, proof by self-reference). When Season 2 arrives, it teaches by pointing at the substrate. The substrate is already correct.
+The repo's operational discipline being Season-2-compliant *before* Season 2 lessons are written is intentional — it's the same move the project already makes at the Season 1 finale (TT 15/15, `S1-1500`, proof by self-reference). When Season 2 arrives, it teaches by pointing at the substrate. The substrate is already correct.
 
 ## Season boundaries and invariants
 
@@ -99,8 +95,8 @@ This spec introduces the `S<n>-<number>-<slug>` namespace. It does **not** rewri
 
 | Spec | What will change when author migrates |
 |---|---|
-| `concept-curriculum/spec.md` | C01–C14 map onto `S1-100` … `S1-1400`. New row for the `S1-950` concept (dashboards-must-add-observability). |
-| `narrative-arc/spec.md` | Season 1 arc absorbs the `S1-950` insertion between TT #09 and TT #10. |
+| `concept-curriculum/spec.md` | C01–C15 map onto `S1-100` … `S1-1500` (strict sequential hundreds). |
+| `narrative-arc/spec.md` | Season 1 arc spans TT 01/15 through TT 15/15; the `S1-1000` (dashboards-must-add-observability) beat sits between S1-900 and S1-1100. |
 | `lessons/spec.md` | Registry rows adopt `S1-NNN-<slug>` IDs. Existing `lesson_<snake>` slugs become aliases or get formally retired via tombstone (author's call). |
 | `meta-examples/spec.md` | Per-lesson references update from concept IDs to season IDs where it sharpens the citation. |
 
@@ -109,4 +105,4 @@ This spec introduces the `S<n>-<number>-<slug>` namespace. It does **not** rewri
 ## Trace
 
 `@trace spec:seasons`
-`@Lesson S1-1400`
+`@Lesson S1-1500`

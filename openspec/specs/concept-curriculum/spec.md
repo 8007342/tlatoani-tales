@@ -25,12 +25,12 @@ After each strip, the reader leaves with a *trivial yet devastating* improvement
 | C07 | Iteration was always there | `S1-700` | "You've been iterating the whole time. You just weren't aiming." | C06 |
 | C08 | Observability > unit tests | `S1-800` | "Tests tell you if yesterday's mistake reappeared. Observability tells you what today's mistake IS." | C07 |
 | C09 | Observability > just logs | `S1-900` | "Logs are raw material. Observability is what you do with them." | C08 |
-| C09.5 | Dashboards must add observability | `S1-950` | "A dashboard that only shows raw logs is a louder log. Observability is the shape the dashboard adds." | C09 |
-| C10 | Telemetry = meaning of logs | `S1-1000` | "A number across time has a shape. That shape is the truth." | C09.5 |
-| C11 | Meaning is operable | `S1-1100` | "You can add, multiply, and compare shapes. That's engineering with eyes open." | C10 |
-| C12 | The loop closes | `S1-1200` | "Last iteration's meaning is this iteration's input. Now you're not guessing — you're converging." | C11 |
-| C13 | BOOM — monotonic convergence | `S1-1300` | "Ask your AI for monotonic_convergence. You already earned it." | C01–C12 |
-| C14 | Proof by self-reference | `S1-1400` | "Not sure it applies to your work? This comic was made that way. Repo is right there." | C13 |
+| C10 | Dashboards must add observability | `S1-1000` | "A dashboard that only shows raw logs is a louder log. Observability is the shape the dashboard adds." | C09 |
+| C11 | Telemetry = meaning of logs | `S1-1100` | "A number across time has a shape. That shape is the truth." | C10 |
+| C12 | Meaning is operable | `S1-1200` | "You can add, multiply, and compare shapes. That's engineering with eyes open." | C11 |
+| C13 | The loop closes | `S1-1300` | "Last iteration's meaning is this iteration's input. Now you're not guessing — you're converging." | C12 |
+| C14 | BOOM — monotonic convergence | `S1-1400` | "Ask your AI for monotonic_convergence. You already earned it." | C01–C13 |
+| C15 | Proof by self-reference | `S1-1500` | "Not sure it applies to your work? This comic was made that way. Repo is right there." | C14 |
 
 Lesson slugs are canon per `lessons/spec.md`. Each concept has exactly one primary lesson — the humane, readable phrase the reader carries out of the strip.
 
@@ -38,21 +38,21 @@ Lesson slugs are canon per `lessons/spec.md`. Each concept has exactly one prima
 
 | Strip | Concept(s) | Notes |
 |---|---|---|
-| TT #01 | C01 | Already shipped (retro-spec) — context overflow demo |
-| TT #02 | C02 | Covi "saves" context by screenshotting it |
-| TT #03 | C03 | Tlatoāni opens the notebook; Covi realizes git log was there all along |
-| TT #04 | C04 | Two hourglasses, one labeled "before", one "after" — Tlatoāni just points |
-| TT #05 | C05 | Two Covis edit the same scroll, expect conflict, scroll shows reconciled |
-| TT #06 | C06 | Covi asks AI for feature; Tlatoāni hands them a sealed scroll first |
-| TT #07 | C07 | Covi on treadmill insisting they're working; Tlatoāni rotates the treadmill toward a staircase |
-| TT #08 | C08 | Covi shows green tests, fire visible through window; Tlatoāni hands a telescope |
-| TT #09 | C09 | Covi reads a log line; Tlatoāni holds up a dashboard with the *shape* of that line over time |
-| TT #09.5 | C09.5 | Covi proudly unveils a dashboard that is just bigger log lines; Tlatoāni quietly overlays a trend curve — the dashboard gains observability |
-| TT #10 | C10 | Covi watches a single number; Tlatoāni shows it as a curve with meaning |
-| TT #11 | C11 | Covi tries to add two curves; Tlatoāni shows the sum is a new meaning |
-| TT #12 | C12 | The curve from last week becomes this week's prompt |
-| TT #13 | C13 | Covi casually says "AI, monotonic_convergence please" — it just works — Tlatoāni nods |
-| TT #14 | C14 | Skeptic: "You can't apply this anywhere." Covi: "Of course you can! This comic was!" — GitHub URL in frame |
+| TT 01/15 | C01 | Already shipped (retro-spec) — context overflow demo |
+| TT 02/15 | C02 | Covi "saves" context by screenshotting it |
+| TT 03/15 | C03 | Tlatoāni opens the notebook; Covi realizes git log was there all along |
+| TT 04/15 | C04 | Two hourglasses, one labeled "before", one "after" — Tlatoāni just points |
+| TT 05/15 | C05 | Two Covis edit the same scroll, expect conflict, scroll shows reconciled |
+| TT 06/15 | C06 | Covi asks AI for feature; Tlatoāni hands them a sealed scroll first |
+| TT 07/15 | C07 | Covi on treadmill insisting they're working; Tlatoāni rotates the treadmill toward a staircase |
+| TT 08/15 | C08 | Covi shows green tests, fire visible through window; Tlatoāni hands a telescope |
+| TT 09/15 | C09 | Covi reads a log line; Tlatoāni holds up a dashboard with the *shape* of that line over time |
+| TT 10/15 | C10 | Covi proudly unveils a dashboard that is just bigger log lines; Tlatoāni quietly overlays a trend curve — the dashboard gains observability |
+| TT 11/15 | C11 | Covi watches a single number; Tlatoāni shows it as a curve with meaning |
+| TT 12/15 | C12 | Covi tries to add two curves; Tlatoāni shows the sum is a new meaning |
+| TT 13/15 | C13 | The curve from last week becomes this week's prompt |
+| TT 14/15 | C14 | Covi casually says "AI, monotonic_convergence please" — it just works — Tlatoāni nods |
+| TT 15/15 | C15 | Skeptic: "You can't apply this anywhere." Covi: "Of course you can! This comic was!" — GitHub URL in frame |
 
 Concepts may split across multiple strips as we go. Mapping is part of the spec and updates in place.
 
@@ -63,4 +63,4 @@ Strip proposals MUST declare `Depends on: [Cxx, Cxx]` in their frontmatter. The 
 ## Trace
 
 `@trace spec:concept-curriculum`
-`@Lesson S1-1400`
+`@Lesson S1-1500`

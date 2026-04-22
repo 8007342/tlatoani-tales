@@ -1,4 +1,4 @@
-# S1-950 — Dashboards must add observability
+# S1-1000 — Dashboards must add observability
 
 ## Abstract
 
@@ -7,16 +7,16 @@ A dashboard that only mirrors statistics isn't a dashboard — it's a passive di
 ## Position
 
 - Season: S1
-- Number: 950 (decimal-style insertion between S1-900 and S1-1000, per the stepped-hundreds namespace)
+- Number: 1000
 - Predecessors: S1-900-logs-are-ingredients, S1-800-see-the-now
-- Successors: S1-1000-shape-has-meaning
+- Successors: S1-1100-shape-has-meaning
 
 ## References in this project
 
 - `openspec/specs/calmecac/spec.md` *(future — Wave 3; the storyboard viewer that is this lesson made tangible)*
 - `openspec/specs/visual-qa-loop/spec.md` — drift scores are dashboarded
 - `openspec/specs/meta-examples/spec.md` ME08 — VLM drift loop as telemetry
-- `openspec/specs/concept-curriculum/spec.md` (C09.5)
+- `openspec/specs/concept-curriculum/spec.md` (C10)
 
 ## Script
 
@@ -24,7 +24,7 @@ A dashboard that only mirrors statistics isn't a dashboard — it's a passive di
 
 **Panel 2.** Tlatoāni turns slightly toward Covi. One short line: *"What do you see?"* Covi, beaming, points at the charts: *"Numbers going up and to the right!"* A small coral accent glows on one chart — foreshadowing.
 
-**Panel 3.** Tlatoāni walks around behind the dashboard and turns it to face the reader. On the *back* of the dashboard: a hand-drawn storyboard. Each chart from panel 1 is re-rendered as a small cell connected by arrows labelled *because*, *then*, *unless*. A scroll hovers above: *"A dashboard that doesn't teach its story is just wallpaper that moves."* Covi's eyes go wide. The trace plate reads `@Lesson S1-950` / `@trace spec:visual-qa-loop`.
+**Panel 3.** Tlatoāni walks around behind the dashboard and turns it to face the reader. On the *back* of the dashboard: a hand-drawn storyboard. Each chart from panel 1 is re-rendered as a small cell connected by arrows labelled *because*, *then*, *unless*. A scroll hovers above: *"A dashboard that doesn't teach its story is just wallpaper that moves."* Covi's eyes go wide. The trace plate reads `@Lesson S1-1000` / `@trace spec:visual-qa-loop`.
 
 ## Joke
 
@@ -44,5 +44,5 @@ Observability isn't a graph — it's a *relationship surfaced between signal and
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-950-dashboards-must-add-observability, spec:visual-qa-loop`
-`@Lesson S1-950`
+`@trace spec:lessons, spec:S1-1000-dashboards-must-add-observability, spec:visual-qa-loop`
+`@Lesson S1-1000`

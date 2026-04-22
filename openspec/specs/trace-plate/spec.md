@@ -6,7 +6,7 @@ Every strip carries **three plates** that turn the comic into a self-describing,
 
 - **Top-left TITLE plate** — the reader's first touch. Full human-readable teaching name (e.g. `[Volatile is dangerous]`). Stylized, expressive, the lesson's meaning made visible before a single panel is read.
 - **Bottom-left TRACE+LESSON plate** — the door inward. `[@Lesson S1-NNN]` on line 1, `[@trace spec:<name>]` on line 2. The grep-friendly, clickable handles to the CRDT of wisdom.
-- **Bottom-right EPISODE plate** — the series pointer. `Tlatoāni Tales #NN`.
+- **Bottom-right EPISODE plate** — the series pointer. `Tlatoāni Tales NN/TOTAL` (Season 1: `Tlatoāni Tales NN/15`). The `/TOTAL` form replaces the earlier `Tlatoāni Tales #NN`; see the Episode plate section below for why the `/TOTAL` matters.
 
 Together the three plates make every strip self-describing (the title reads as content), self-citing (the trace+lesson is a canonical link), and self-locating (the episode is a coordinate in the series). The plates are not chrome; they are the strip's observability surface.
 
@@ -33,7 +33,7 @@ Two layers of citation run through each plate:
 |---|---|---|---|
 | **Title** | Top-left (MAY float right) | `[<Lesson display name>]` | Qwen-Image (stylized text) composited over FLUX panel |
 | **Trace + Lesson** | Bottom-left | Line 1 `[@Lesson S1-NNN]`, line 2 `[@trace spec:<name>]` | PIL (chrome) |
-| **Episode** | Bottom-right | `Tlatoāni Tales #NN` | PIL (chrome) |
+| **Episode** | Bottom-right | `Tlatoāni Tales NN/TOTAL` (Season 1: `Tlatoāni Tales NN/15`) | PIL (chrome) |
 
 ### Title plate (top-left, new)
 
@@ -61,11 +61,13 @@ Two layers of citation run through each plate:
 - **Text wrapping**: both lines may wrap for unusually long names. Prefer wrapping the `@trace` line first (secondary).
 - **Legibility constraint**: MUST NOT obscure character faces or key action. Shrink to min 40% of episode-plate area if forced.
 
-### Episode plate (bottom-right, unchanged)
+### Episode plate (bottom-right)
 
 - **Position**: bottom-right.
 - **Overlap**: all of panel 3 and ~12% of panel 2.
-- **Text**: `Tlatoāni Tales #NN`.
+- **Text**: `Tlatoāni Tales NN/TOTAL`. For Season 1, `TOTAL = 15` (stable — this is the convergence signal). Example: `Tlatoāni Tales 11/15`.
+- **Historical note**: prior renders used the bare `Tlatoāni Tales #NN` form. The `NN/TOTAL` form was adopted once the season's lesson count became stable — the `/15` denominator tells a reader *how far* they are through the complete teaching. Seeing `11/15` lands differently from a bare `#11`: the first communicates nearness-to-convergence; the second communicates only position. The denominator is the pedagogical payload.
+- **When to apply `/TOTAL`**: only once the season's TOTAL is stable (author signals convergence). Until then, a bare number is legal. Decimal strip numbers (e.g. `TT 11.5/15`) are reserved for future lessons that *teach* decimal-insertion's meaning; they are not in use for Season 1.
 - **Styling**: matches the trace+lesson plate (chrome pair).
 
 ## Selection rule (per strip)
@@ -92,21 +94,21 @@ Selection priority:
 
 | Strip | Title (displayed top-left) | Lesson ID (bottom-left line 1) | Trace spec (bottom-left line 2) |
 |---|---|---|---|
-| TT #01 | `[Volatile is dangerous]` | `S1-100` | `concept-curriculum` |
-| TT #02 | `[Save means findable]` | `S1-200` | `concept-curriculum` |
-| TT #03 | `[Memory lives in history]` | `S1-300` | `meta-examples` |
-| TT #04 | `[Discrete time]` | `S1-400` | `meta-examples` |
-| TT #05 | `[Edits that reconcile]` | `S1-500` | `licensing` |
-| TT #06 | `[Ask in writing]` | `S1-600` | `concept-curriculum` |
-| TT #07 | `[Loops need aim]` | `S1-700` | `concept-curriculum` |
-| TT #08 | `[See the now]` | `S1-800` | `visual-qa-loop` |
-| TT #09 | `[Logs are ingredients]` | `S1-900` | `visual-qa-loop` |
-| TT #TBD | `[Dashboards must add observability]` | `S1-950` | `visual-qa-loop` |
-| TT #10 | `[Shape has meaning]` | `S1-1000` | `visual-qa-loop` |
-| TT #11 | `[Meaning is operable]` | `S1-1100` | `visual-qa-loop` |
-| TT #12 | `[The loop closes]` | `S1-1200` | `visual-qa-loop` |
-| TT #13 | `[Monotonic convergence]` | `S1-1300` | `meta-examples` |
-| TT #14 | `[Proof by self-reference]` | `S1-1400` | `meta-examples` |
+| TT 01/15 | `[Volatile is dangerous]` | `S1-100` | `concept-curriculum` |
+| TT 02/15 | `[Save means findable]` | `S1-200` | `concept-curriculum` |
+| TT 03/15 | `[Memory lives in history]` | `S1-300` | `meta-examples` |
+| TT 04/15 | `[Discrete time]` | `S1-400` | `meta-examples` |
+| TT 05/15 | `[Edits that reconcile]` | `S1-500` | `licensing` |
+| TT 06/15 | `[Ask in writing]` | `S1-600` | `concept-curriculum` |
+| TT 07/15 | `[Loops need aim]` | `S1-700` | `concept-curriculum` |
+| TT 08/15 | `[See the now]` | `S1-800` | `visual-qa-loop` |
+| TT 09/15 | `[Logs are ingredients]` | `S1-900` | `visual-qa-loop` |
+| TT 10/15 | `[Dashboards must add observability]` | `S1-1000` | `visual-qa-loop` |
+| TT 11/15 | `[Shape has meaning]` | `S1-1100` | `visual-qa-loop` |
+| TT 12/15 | `[Meaning is operable]` | `S1-1200` | `visual-qa-loop` |
+| TT 13/15 | `[The loop closes]` | `S1-1300` | `visual-qa-loop` |
+| TT 14/15 | `[Monotonic convergence]` | `S1-1400` | `meta-examples` |
+| TT 15/15 | `[Proof by self-reference]` | `S1-1500` | `meta-examples` |
 
 Mapping confirmed in each strip's `proposal.md`. Lessons registry is authoritative — see `lessons/spec.md` and `seasons/spec.md`.
 
@@ -146,7 +148,7 @@ The `calmecac.` subdomain is the observability mirror of the public comic. `calm
 
 ```jsonc
 {
-  "strip":              "TT #NN",
+  "strip":              "TT NN/15",
   "title":              "Volatile is dangerous",        // display name, no brackets
   "title_display":      "[Volatile is dangerous]",      // exactly as rendered in-panel
   "title_render_model": "Qwen-Image",                   // the stylized text engine
@@ -179,7 +181,7 @@ The `calmecac.` subdomain is the observability mirror of the public comic. `calm
   "reinforces_lessons": [],
 
   "alt_text":           "<accessible description of all three panels, naming all three plates>",
-  "caption":            "Tlatoāni Tales #NN — [Title] — @Lesson S1-NNN / @trace spec:<name>"
+  "caption":            "Tlatoāni Tales NN/15 — [Title] — @Lesson S1-NNN / @trace spec:<name>"
 }
 ```
 
@@ -225,4 +227,4 @@ VLM checks (defined in `visual-qa-loop/spec.md`):
 ## Trace
 
 `@trace spec:trace-plate, spec:style-bible, spec:visual-qa-loop, spec:lessons, spec:seasons, spec:meta-examples`
-`@Lesson S1-1400` *(self-reference — trace-plate is literally observability-of-the-observability)*
+`@Lesson S1-1500` *(self-reference — trace-plate is literally observability-of-the-observability)*

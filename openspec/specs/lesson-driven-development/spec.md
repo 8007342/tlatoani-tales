@@ -80,7 +80,7 @@ Each step leaves a `@trace spec:lesson-driven-development` and a `@Lesson S1-NNN
 
 ## Process: adding a new lesson
 
-1. **Reserve an ID.** Pick a slug in the season's namespace: `S<n>-<number>-<slug>`. The step of 100 (`S1-100`, `S1-200`, …) reserves insertion room; `S1-950` is the canonical example of a later insertion.
+1. **Reserve an ID.** Pick a slug in the season's namespace: `S<n>-<number>-<slug>`. Season 1 uses strict sequential hundreds (`S1-100`, `S1-200`, … `S1-1500`); decimal insertion is reserved for a future lesson that *teaches* decimal-insertion's meaning. New beats added during authoring trigger a renumbering sweep (see the April 2026 tombstone rows in `lessons/spec.md`).
 2. **Write the per-lesson spec** at `openspec/specs/lessons/Sn-NNN-slug/spec.md` with all seven fields (a)–(g).
 3. **Register** the lesson in `lessons/spec.md` (registry table + coverage section).
 4. **Reference** the lesson from `concept-curriculum` if it teaches a canonical concept on the ladder.
@@ -98,4 +98,4 @@ This project's own development follows LDD. Each commit in the repo's Lamport ch
 ## Trace
 
 `@trace spec:lesson-driven-development, spec:lessons, spec:concept-curriculum, spec:seasons`
-`@Lesson S1-1400` *(proof-by-self-reference — the methodology is self-describing)*
+`@Lesson S1-1500` *(proof-by-self-reference — the methodology is self-describing)*

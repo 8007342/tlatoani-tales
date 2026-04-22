@@ -9,7 +9,7 @@ Tests check yesterday. Observability shows today. Green tests say "no known regr
 - Season: S1
 - Number: 800
 - Predecessors: S1-700-loops-need-aim
-- Successors: S1-900-logs-are-ingredients, S1-950-dashboards-must-add-observability
+- Successors: S1-900-logs-are-ingredients, S1-1000-dashboards-must-add-observability
 
 ## References in this project
 

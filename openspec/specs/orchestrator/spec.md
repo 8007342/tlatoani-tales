@@ -2,12 +2,12 @@
 
 ## Purpose
 
-`tt-render` is the CLI that drives Tlatoāni Tales end-to-end: spec files → content-addressed panel cache → ComfyUI render → VLM drift critique → reroll → composite + plates → `output/Tlatoāni_Tales_NNN.png`.
+`tt-render` is the CLI that drives Tlatoāni Tales end-to-end: spec files → content-addressed panel cache → ComfyUI render → VLM drift critique → reroll → composite + plates → `output/Tlatoāni_Tales_NN.png`.
 
-This is where **convergence literally closes**. Every other spec describes a contract; this spec describes the loop that *enforces* those contracts against pixels. A spec edit is a Lamport tick (ME01); the orchestrator is the G-Set union operator that re-derives the world from the new spec state (ME05). When TT #12 ships and a reader asks "where does the loop close?" — the answer is this file and the code it governs.
+This is where **convergence literally closes**. Every other spec describes a contract; this spec describes the loop that *enforces* those contracts against pixels. A spec edit is a Lamport tick (ME01); the orchestrator is the G-Set union operator that re-derives the world from the new spec state (ME05). When TT 13/15 ships and a reader asks "where does the loop close?" — the answer is this file and the code it governs.
 
 `@trace spec:orchestrator`
-`@Lesson lesson_loop_closes`
+`@Lesson S1-1300`
 
 ## Invariants
 
@@ -156,7 +156,7 @@ Pseudocode — single strip, single panel; the default command fans this out per
 10. append output/telemetry/<strip>.jsonl
 ```
 
-The loop at step 5g is the *literal* materialization of C12 and `lesson_loop_closes`. Telemetry from iteration `i` becomes prompt input for iteration `i+1`. The strip teaching that lesson is produced by that lesson.
+The loop at step 5g is the *literal* materialization of C13 and `@Lesson S1-1300` (the loop closes). Telemetry from iteration `i` becomes prompt input for iteration `i+1`. The strip teaching that lesson is produced by that lesson.
 
 ## ComfyUI integration
 
@@ -187,8 +187,8 @@ PIL. Inputs: three cached panel PNGs + strip metadata. Output: one composited PN
 
 - Layout: horizontal 3-panel strip per style-bible. Gutters: cream paper tone (`#F4E9D3`) matching background.
 - Plates: two, matched pair per trace-plate + style-bible.
-  - **Episode plate** (bottom-right): text `Tlatoāni Tales #NN`.
-  - **Trace + lesson plate** (bottom-left, two lines): line 1 `[@trace spec:<name>]`, line 2 `@Lesson <slug>`. Lessons spec governs the second line.
+  - **Episode plate** (bottom-right): text `Tlatoāni Tales NN/TOTAL` (Season 1: `Tlatoāni Tales NN/15`). See `trace-plate/spec.md` for convergence-signal semantics.
+  - **Trace + lesson plate** (bottom-left, two lines): line 1 `[@trace spec:<name>]`, line 2 `@Lesson S1-NNN`. Lessons spec governs the second line.
 - Font: Atkinson Hyperlegible (bundled at `assets/fonts/AtkinsonHyperlegible-*.ttf`, CC BY 4.0 — already cream-paper-friendly, high legibility at small sizes). No system font fallback; missing font is exit 30.
 - Plate overlap geometry per trace-plate spec: episode plate covers all of panel 3 + ~12% of panel 2; trace plate covers all of panel 1 + ~12% of panel 2.
 - Plate auto-shrink: if a plate would obscure a face (detected by the QA check `plate.legibility`), shrink to ≥40% of the episode plate's area — never below.
@@ -199,17 +199,17 @@ Exactly the schema in `trace-plate/spec.md`, with one addition:
 
 ```jsonc
 {
-  "strip":              "TT #NN",
+  "strip":              "TT NN/15",
   "title":              "<short strip name>",
   "trace_spec":         "<name>",
   "trace_search_url":   "https://github.com/8007342/tlatoani-tales/search?q=%40trace+spec%3A<name>&type=code",
   "trace_spec_url":     "https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/<name>/spec.md",
-  "lesson":             "<slug>",
-  "lesson_search_url":  "https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+<slug>&type=code",
+  "lesson":             "S1-NNN",
+  "lesson_search_url":  "https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+S1-NNN&type=code",
   "concepts_taught":    ["Cxx"],
   "concepts_assumed":   ["Cxx"],
   "alt_text":           "<accessible description of all three panels>",
-  "caption":            "Tlatoāni Tales #NN — <strip name> — @trace spec:<name>"
+  "caption":            "Tlatoāni Tales NN/15 — <strip name> — @trace spec:<name>"
 }
 ```
 
@@ -279,6 +279,6 @@ Each step strictly refines; none invalidate the current spec's contracts. That's
 ## Trace
 
 `@trace spec:orchestrator, spec:style-bible, spec:character-canon, spec:symbol-dictionary, spec:trace-plate, spec:visual-qa-loop, spec:lessons, spec:licensing, spec:meta-examples, spec:concept-curriculum`
-`@Lesson lesson_loop_closes`
-`@Lesson lesson_edits_that_reconcile`
-`@Lesson lesson_see_the_now`
+`@Lesson S1-1300`
+`@Lesson S1-500`
+`@Lesson S1-800`

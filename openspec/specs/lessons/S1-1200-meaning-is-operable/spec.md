@@ -1,4 +1,4 @@
-# S1-1100 — Meaning is operable
+# S1-1200 — Meaning is operable
 
 ## Abstract
 
@@ -7,16 +7,16 @@ You can add and compare shapes. Once meaning is a shape, meaning becomes an *ope
 ## Position
 
 - Season: S1
-- Number: 1100
-- Predecessors: S1-1000-shape-has-meaning
-- Successors: S1-1200-loop-closes
+- Number: 1200
+- Predecessors: S1-1100-shape-has-meaning
+- Successors: S1-1300-loop-closes
 
 ## References in this project
 
 _(Populated as coverage accretes. Empty is legal.)_
 
 - `openspec/specs/visual-qa-loop/spec.md`
-- `openspec/specs/concept-curriculum/spec.md` (C11)
+- `openspec/specs/concept-curriculum/spec.md` (C12)
 
 ## Script
 
@@ -36,5 +36,5 @@ Two curves can be added, subtracted, compared, aligned — and the result is a *
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-1100-meaning-is-operable`
-`@Lesson S1-1100`
+`@trace spec:lessons, spec:S1-1200-meaning-is-operable`
+`@Lesson S1-1200`

@@ -1,4 +1,4 @@
-# S1-1200 — The loop closes
+# S1-1300 — The loop closes
 
 ## Abstract
 
@@ -7,16 +7,16 @@ Last iteration's meaning is this iteration's input. Observability becomes the fe
 ## Position
 
 - Season: S1
-- Number: 1200
-- Predecessors: S1-1100-meaning-is-operable
-- Successors: S1-1300-monotonic-convergence
+- Number: 1300
+- Predecessors: S1-1200-meaning-is-operable
+- Successors: S1-1400-monotonic-convergence
 
 ## References in this project
 
 _(Populated as coverage accretes. Empty is legal.)_
 
 - `openspec/specs/visual-qa-loop/spec.md`
-- `openspec/specs/concept-curriculum/spec.md` (C12)
+- `openspec/specs/concept-curriculum/spec.md` (C13)
 - `openspec/specs/meta-examples/spec.md` ME08 (the loop itself)
 
 ## Script
@@ -37,5 +37,5 @@ The output of last pass is the prompt of the next pass. Not "data piped to code"
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-1200-loop-closes`
-`@Lesson S1-1200`
+`@trace spec:lessons, spec:S1-1300-loop-closes`
+`@Lesson S1-1300`

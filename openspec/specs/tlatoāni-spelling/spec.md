@@ -20,9 +20,9 @@ Every surface below MUST carry the macron form **Tlatoāni** unless it appears i
 | Code comments | Always macron | `# Tlatoāni's crown is gold` |
 | `@trace spec:<name>` values | Always macron when the spec slug carries the word | `@trace spec:tlatoāni-spelling` |
 | `@Lesson <slug>` values | Always macron when the lesson slug carries the word | future slugs TBD |
-| Commit messages | Always macron | `docs: Tlatoāni plate placement in TT #04` |
+| Commit messages | Always macron | `docs: Tlatoāni plate placement in TT 04/15` |
 | Strip speech bubbles / captions / titles | Always macron | *"I am Tlatoāni."* |
-| Rendered plates (episode + trace) | Always macron | `Tlatoāni Tales #07` |
+| Rendered plates (episode + trace) | Always macron | `Tlatoāni Tales 07/15` |
 | Character reference sheet labels | Always macron | `characters/tlatoāni/README.md` |
 | ASCII-art banners (hand-rolled) | Always macron | the README banner at repo root |
 | Local directory names on author's machine | Always macron | `~/src/tlatoāni-tales/` |
@@ -77,11 +77,11 @@ The git history contains plain `Tlatoani` in older commits. This is not embarras
 git log -S "Tlatoani" -- ':!openspec/specs/tlatoāni-spelling/spec.md'
 ```
 
-can watch the correction propagate across the tree commit by commit, the same way `licensing/spec.md` will one day propagate SPDX headers and `meta-examples/spec.md` will keep accreting load-bearing `ME##` rows. The project's own spelling history is Lamport-ordered evidence of its own thesis. If we ever achieve a fully-converged tree (macron everywhere except catalogued TBs), that commit will be citable in TT #14 as the closing demonstration: *this repo converged to its own spec, in front of you, while you were reading it.*
+can watch the correction propagate across the tree commit by commit, the same way `licensing/spec.md` will one day propagate SPDX headers and `meta-examples/spec.md` will keep accreting load-bearing `ME##` rows. The project's own spelling history is Lamport-ordered evidence of its own thesis. If we ever achieve a fully-converged tree (macron everywhere except catalogued TBs), that commit will be citable in TT 15/15 as the closing demonstration: *this repo converged to its own spec, in front of you, while you were reading it.*
 
 Catalogued as a meta-example candidate for the next free `ME##` slot (author's discretion): "Repo-wide spelling convergence" — demonstrates C05, C06, C07.
 
 ## Trace
 
 `@trace spec:tlatoāni-spelling`
-`@Lesson lesson_edits_that_reconcile` — kinship: an edit that propagates through history without conflict, the same CRDT-flavoured correction mechanism this spec formalises for one specific word.
+`@Lesson S1-500` — kinship: an edit that propagates through history without conflict, the same CRDT-flavoured correction mechanism this spec formalises for one specific word.

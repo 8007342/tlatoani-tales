@@ -1,4 +1,4 @@
-# S1-1000 — Shape has meaning
+# S1-1100 — Shape has meaning
 
 ## Abstract
 
@@ -7,16 +7,16 @@ A number across time has a shape; that shape is the truth. A value alone is a do
 ## Position
 
 - Season: S1
-- Number: 1000
-- Predecessors: S1-950-dashboards-must-add-observability, S1-900-logs-are-ingredients
-- Successors: S1-1100-meaning-is-operable
+- Number: 1100
+- Predecessors: S1-1000-dashboards-must-add-observability, S1-900-logs-are-ingredients
+- Successors: S1-1200-meaning-is-operable
 
 ## References in this project
 
 _(Populated as coverage accretes. Empty is legal.)_
 
 - `openspec/specs/visual-qa-loop/spec.md`
-- `openspec/specs/concept-curriculum/spec.md` (C10)
+- `openspec/specs/concept-curriculum/spec.md` (C11)
 
 ## Script
 
@@ -36,5 +36,5 @@ The word "telemetry" never appears — but the reader now holds the intuition. A
 
 ## Trace
 
-`@trace spec:lessons, spec:S1-1000-shape-has-meaning`
-`@Lesson S1-1000`
+`@trace spec:lessons, spec:S1-1100-shape-has-meaning`
+`@Lesson S1-1100`
