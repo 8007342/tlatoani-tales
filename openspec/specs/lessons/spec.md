@@ -2,127 +2,142 @@
 
 ## Purpose
 
-The **humane layer** on top of the technical trace namespace. Each lesson is a warm, memorable phrase the reader carries out of a strip — readable without clicking anything. Slugs are stable identifiers; coverage sets (specs + meta-examples + strips) are a CRDT that only grows except through tombstones.
+**Registry and index** of all published lessons. The humane layer on top of the technical trace namespace — each lesson is a warm, memorable phrase the reader carries out of a strip, readable without clicking anything.
 
-Two layers of citation run through the project:
+This spec is **not** the per-lesson body. It is the *index*. Each published lesson has its own spec at:
+
+```
+openspec/specs/lessons/<Sn-NNN-slug>/spec.md
+```
+
+Per-lesson specs follow the seven-field contract defined in `lesson-driven-development/spec.md` (Abstract, Position, References, Script, Joke, Punchline, Aha moment, plus Trace). This registry points at them.
+
+Two layers of citation continue to run through the project:
 
 | Layer | Format | For |
 |---|---|---|
 | Technical trace | `@trace spec:<name>` | "Which contract governs this code?" — grep-friendly, precise |
-| Lesson trace | `@Lesson <slug>` | "Which teaching is this in service of?" — human-readable, reader-friendly |
+| Lesson trace | `@Lesson <Sn-NNN>` | "Which teaching is this in service of?" — human-readable, reader-friendly |
 
 Both appear on every strip's left plate. Non-clickers read the lesson and get the point. Clickers follow the URL into the CRDT of all wisdom gathered under that lesson.
 
-## Invariants
+## Canonical naming
 
-- **Slug format**: `lesson_<snake_case_phrase>`. Lowercase. No leading/trailing underscore. Phrase is meaningful standalone.
-- **Slugs never reuse.** Retired slugs become tombstones; archival forks stay legible.
-- **Each strip declares ONE primary lesson** in its `proposal.md`. Strips may reinforce additional lessons (listed in `reinforces:`).
-- **Each lesson declares its coverage**: which specs implement or describe it, which meta-examples exemplify it, which strips teach or reinforce it.
+Lesson IDs use the `Sn-NNN-slug` form defined in `seasons/spec.md`:
 
-## Registry
+- `Sn` — season integer (`S1`, `S2`, …).
+- `NNN` — lesson index, stepped by **100** starting at **100** (gaps absorb insertions without renumbering).
+- `slug` — the lesson's kebab-case phrase.
 
-| Slug | Display | Reader takeaway | Primary | Reinforces |
+The directory under `openspec/specs/lessons/` uses the full `Sn-NNN-slug` form; the `@Lesson` citation form uses only the short `Sn-NNN` prefix in code (full form on plates and in captions, per `trace-plate/spec.md`).
+
+**ID stability.** Once a lesson ID is published (merged to main), **it never reuses**. A retired ID becomes a tombstone.
+
+## Tombstoned old-slug form
+
+The old `lesson_<snake_case>` slug form is **tombstoned** as of 2026-04-22. It is not a valid citation anywhere in the repo from that date forward. The commit history will show every `@Lesson lesson_*` reference getting replaced with its `@Lesson Sn-NNN` equivalent — the migration is itself a monotonic convergence event this project teaches about (see `meta-examples/spec.md` ME12 and the S1-500 / S1-1200 lessons).
+
+### Migration table (old → new)
+
+| Old slug (tombstoned 2026-04-22) | New ID |
+|---|---|
+| `lesson_volatile_is_dangerous` | `S1-100-volatile-is-dangerous` |
+| `lesson_save_means_findable` | `S1-200-save-means-findable` |
+| `lesson_memory_lives_in_history` | `S1-300-memory-lives-in-history` |
+| `lesson_discrete_time` | `S1-400-discrete-time` |
+| `lesson_edits_that_reconcile` | `S1-500-edits-that-reconcile` |
+| `lesson_ask_in_writing` | `S1-600-ask-in-writing` |
+| `lesson_loops_need_aim` | `S1-700-loops-need-aim` |
+| `lesson_see_the_now` | `S1-800-see-the-now` |
+| `lesson_logs_are_ingredients` | `S1-900-logs-are-ingredients` |
+| *(no legacy slug — new lesson)* | `S1-950-dashboards-must-add-observability` |
+| `lesson_shape_has_meaning` | `S1-1000-shape-has-meaning` |
+| `lesson_meaning_is_operable` | `S1-1100-meaning-is-operable` |
+| `lesson_loop_closes` | `S1-1200-loop-closes` |
+| `lesson_monotonic_convergence` | `S1-1300-monotonic-convergence` |
+| `lesson_proof_by_self_reference` | `S1-1400-proof-by-self-reference` |
+
+Every old slug is tombstoned — new code, specs, proposals, captions, and commit messages MUST use the `Sn-NNN` form. Archival forks that still read `lesson_*` can resolve to the tombstoned row for their last canonical meaning.
+
+**Never-reuse discipline.** The old slug strings above will not be reassigned to any future lesson, ever. The tombstone is the ID's afterlife.
+
+## Season 1 registry
+
+Thesis: *"From volatile context to monotonic convergence."*
+
+| ID | Display | Takeaway | Primary TT strip | Coverage (per-lesson spec) |
 |---|---|---|---|---|
-| `lesson_volatile_is_dangerous` | Volatile is dangerous | "Starting fresh loses everything that mattered." | TT #01 | TT #02, TT #14 |
-| `lesson_save_means_findable` | Save means findable | "Copy-pasting isn't saving. Saving means you can find it again." | TT #02 | — |
-| `lesson_memory_lives_in_history` | Memory lives in history | "Git remembers what you forgot — if you let it." | TT #03 | TT #04 |
-| `lesson_discrete_time` | Discrete time | "Every commit answers what was true before and after." | TT #04 | TT #05 |
-| `lesson_edits_that_reconcile` | Edits that reconcile | "Two edits to the same rule? The spec reconciles, not you." | TT #05 | — |
-| `lesson_ask_in_writing` | Ask in writing | "Ask for what you want in writing. Code converges toward it." | TT #06 | — |
-| `lesson_loops_need_aim` | Loops need aim | "You've been iterating. You just weren't aiming." | TT #07 | — |
-| `lesson_see_the_now` | See the now | "Tests check yesterday. Observability shows today." | TT #08 | TT #09, TT #10 |
-| `lesson_logs_are_ingredients` | Logs are ingredients | "Raw logs aren't truth. They're material for it." | TT #09 | — |
-| `lesson_shape_has_meaning` | Shape has meaning | "A number across time has a shape. That shape is the truth." | TT #10 | TT #11 |
-| `lesson_meaning_is_operable` | Meaning is operable | "You can add, compare, and transform shapes. That's engineering with eyes open." | TT #11 | — |
-| `lesson_loop_closes` | The loop closes | "Last iteration's meaning is this iteration's input." | TT #12 | — |
-| `lesson_monotonic_convergence` | Monotonic convergence | "Ask your AI for it. You already earned it." | TT #13 | — |
-| `lesson_proof_by_self_reference` | Proof by self-reference | "Not sure it applies? This comic was made that way." | TT #14 | — |
+| `S1-100-volatile-is-dangerous` | Volatile is dangerous | Starting fresh loses everything that mattered. | TT #01 | [`openspec/specs/lessons/S1-100-volatile-is-dangerous/spec.md`](S1-100-volatile-is-dangerous/spec.md) |
+| `S1-200-save-means-findable` | Save means findable | Copy-pasting isn't saving. | TT #02 | [`openspec/specs/lessons/S1-200-save-means-findable/spec.md`](S1-200-save-means-findable/spec.md) |
+| `S1-300-memory-lives-in-history` | Memory lives in history | Git remembers what you forgot — if you let it. | TT #03 | [`openspec/specs/lessons/S1-300-memory-lives-in-history/spec.md`](S1-300-memory-lives-in-history/spec.md) |
+| `S1-400-discrete-time` | Discrete time | Every commit answers what was true before and after. | TT #04 | [`openspec/specs/lessons/S1-400-discrete-time/spec.md`](S1-400-discrete-time/spec.md) |
+| `S1-500-edits-that-reconcile` | Edits that reconcile | Two edits to the same rule? The spec reconciles, not you. | TT #05 | [`openspec/specs/lessons/S1-500-edits-that-reconcile/spec.md`](S1-500-edits-that-reconcile/spec.md) |
+| `S1-600-ask-in-writing` | Ask in writing | Ask for what you want in writing. | TT #06 | [`openspec/specs/lessons/S1-600-ask-in-writing/spec.md`](S1-600-ask-in-writing/spec.md) |
+| `S1-700-loops-need-aim` | Loops need aim | You've been iterating. You just weren't aiming. | TT #07 | [`openspec/specs/lessons/S1-700-loops-need-aim/spec.md`](S1-700-loops-need-aim/spec.md) |
+| `S1-800-see-the-now` | See the now | Tests check yesterday. Observability shows today. | TT #08 | [`openspec/specs/lessons/S1-800-see-the-now/spec.md`](S1-800-see-the-now/spec.md) |
+| `S1-900-logs-are-ingredients` | Logs are ingredients | Raw logs aren't truth. They're material for it. | TT #09 | [`openspec/specs/lessons/S1-900-logs-are-ingredients/spec.md`](S1-900-logs-are-ingredients/spec.md) |
+| `S1-950-dashboards-must-add-observability` | Dashboards must add observability | Real dashboards add observability, not just display it. | TT #09.5 | [`openspec/specs/lessons/S1-950-dashboards-must-add-observability/spec.md`](S1-950-dashboards-must-add-observability/spec.md) |
+| `S1-1000-shape-has-meaning` | Shape has meaning | A number across time has a shape; that shape is the truth. | TT #10 | [`openspec/specs/lessons/S1-1000-shape-has-meaning/spec.md`](S1-1000-shape-has-meaning/spec.md) |
+| `S1-1100-meaning-is-operable` | Meaning is operable | You can add and compare shapes. | TT #11 | [`openspec/specs/lessons/S1-1100-meaning-is-operable/spec.md`](S1-1100-meaning-is-operable/spec.md) |
+| `S1-1200-loop-closes` | The loop closes | Last iteration's meaning is this iteration's input. | TT #12 | [`openspec/specs/lessons/S1-1200-loop-closes/spec.md`](S1-1200-loop-closes/spec.md) |
+| `S1-1300-monotonic-convergence` | Monotonic convergence | Ask your AI for it. You already earned it. | TT #13 | [`openspec/specs/lessons/S1-1300-monotonic-convergence/spec.md`](S1-1300-monotonic-convergence/spec.md) |
+| `S1-1400-proof-by-self-reference` | Proof by self-reference | This comic was made that way. | TT #14 | [`openspec/specs/lessons/S1-1400-proof-by-self-reference/spec.md`](S1-1400-proof-by-self-reference/spec.md) |
 
-These slugs are author-curated. **Do not add new lessons** without explicit author approval — see the curation rule.
+These IDs are author-curated. **Do not add new lessons** without explicit author approval — see the curation rule in `feedback_tlatoani_tales_curation.md`.
 
-## Coverage (what each lesson points to)
+## `@Lesson` citation forms
 
-Each lesson's entry is the aggregation node: the reader who clicks through lands here and sees every spec, meta-example, and strip that touches this teaching. This is the CRDT payoff — one link, the whole wisdom graph.
+| Where | Form | Example |
+|---|---|---|
+| Code comments, commit messages, grep-friendly references | **Short** — `@Lesson Sn-NNN` | `@Lesson S1-100` |
+| Strip trace plates, captions, METADATA.json | **Full** — `[@Lesson Sn-NNN — Display Name]` | `[@Lesson S1-100 — Volatile is dangerous]` |
 
-### `lesson_volatile_is_dangerous`
-- **Concepts**: C01
-- **Specs**: `concept-curriculum`
-- **Meta-examples**: ME02 (OpenSpec delta-merge as the durable counterpart)
-- **Strips**: TT #01 (primary), TT #02 (reinforce), TT #14 (callback)
-
-### `lesson_discrete_time`
-- **Concepts**: C04
-- **Specs**: `concept-curriculum`, `meta-examples`
-- **Meta-examples**: ME01 (git history as Lamport clock)
-- **Strips**: TT #04 (primary), TT #05 (reinforce)
-
-### `lesson_edits_that_reconcile`
-- **Concepts**: C05
-- **Specs**: `licensing` (the live CRDT demo of this lesson), `concept-curriculum`, `meta-examples`
-- **Meta-examples**: ME02 (OpenSpec delta-merge), ME03 (licensing rule table), ME05 (panel cache G-Set), ME09 (LoRA-hash in cache key)
-- **Strips**: TT #05 (primary)
-
-### `lesson_see_the_now`
-- **Concepts**: C08
-- **Specs**: `visual-qa-loop`, `concept-curriculum`
-- **Meta-examples**: ME08 (VLM drift loop), ME11 (trace plate as in-frame observability)
-- **Strips**: TT #08 (primary), TT #09 (reinforce), TT #10 (reinforce)
-
-### `lesson_loop_closes`
-- **Concepts**: C12
-- **Specs**: `visual-qa-loop`, `concept-curriculum`
-- **Meta-examples**: ME08 (the loop itself)
-- **Strips**: TT #12 (primary)
-
-### `lesson_proof_by_self_reference`
-- **Concepts**: C14
-- **Specs**: `meta-examples`, `concept-curriculum`, `narrative-arc`, **all of them**
-- **Meta-examples**: ME01–ME12 (the entire ledger is the proof)
-- **Strips**: TT #14 (primary)
-
-*Remaining lessons: coverage sections fill in as each strip's proposal lands. Empty is legal; the CRDT grows monotonically.*
-
-## CRDT properties
-
-- **Commutative**: coverage lists are sets; order-independent union.
-- **Associative**: merging coverage-additions from parallel branches is well-defined.
-- **Idempotent**: re-adding a spec or ME## to a lesson's coverage is a no-op.
-- **Monotonic**: coverage grows. Removal is not a normal operation; it requires tombstoning the specific entry (rare — e.g. a spec was renamed).
-
-## Tombstones
-
-A retired lesson slug is struck through, dated, and kept:
-`~~lesson_obsolete~~` *(tombstoned 2026-MM-DD — reason)*
-
-New slugs may not reuse the old name. Archival forks that read strips referencing the tombstoned slug can still resolve it to its last canonical meaning.
+The short form is cheap to type, greppable, stable across display-name edits. The full form is what the reader sees — in-frame on the plate, under the image on social posts. See `trace-plate/spec.md` for plate rendering.
 
 ## URL forms
 
-- **Lesson search URL** (the "favorite query"):
-  `https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+<slug>&type=code`
-- **Direct registry section**:
-  `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/spec.md`
+| Form | Template | Surfaces |
+|---|---|---|
+| Lesson search | `https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+Sn-NNN&type=code` | Every file/commit/caption citing this lesson |
+| Per-lesson spec | `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/Sn-NNN-slug/spec.md` | The full seven-field spec for this lesson |
+| Registry (this file) | `https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/spec.md` | The index + migration table |
 
-The search URL surfaces every code comment, strip proposal, commit message, and caption that carries `@Lesson <slug>`. That's the reader's door into the CRDT.
+Search URLs are preferred in captions — they surface the whole trace/lesson network with one click. The `Sn-NNN` prefix is specific enough that search matches don't collide across seasons.
+
+## Coverage as CRDT
+
+Coverage (which specs, meta-examples, and strips cite a lesson) now lives inside each per-lesson spec's `## References in this project` section, not in this registry. The CRDT discipline is unchanged:
+
+- **Commutative**: coverage lists are sets; order-independent union.
+- **Associative**: merging coverage-additions from parallel branches is well-defined.
+- **Idempotent**: re-adding a spec or ME## to a lesson's references is a no-op.
+- **Monotonic**: coverage grows. Removal requires tombstoning the specific entry (rare — e.g. a spec was renamed).
+
+The lesson spec is the aggregation node — a reader who clicks the plate lands there and sees every spec, meta-example, and strip that touches this teaching.
 
 ## Per-strip declaration
 
 In each strip's `proposal.md`:
 
 ```yaml
-lesson: lesson_volatile_is_dangerous
-reinforces: []
-trace_spec: concept-curriculum
+lesson:      S1-NNN-slug       # must exist in this registry
+reinforces:  []                # optional: other lesson IDs this strip echoes
+trace_spec:  <spec-name>       # the governing OpenSpec for this strip
 ```
 
 The orchestrator reads these, composites the two-line left plate, and emits `METADATA.json` with both trace URLs.
 
+## Propagation note
+
+The tombstoning of the old `lesson_<snake>` form is a real monotonic convergence event. Across the repo, every `@Lesson lesson_*` reference — in specs, code comments, commit messages, strip proposals, caption drafts — will be replaced with its `@Lesson Sn-NNN` equivalent in the commits that accompany this restructuring. The commit history is the ledger of the migration; grep across it is the proof of convergence. Live C05, C07, C12 — the CRDT-edit-and-converge discipline applied to the lesson-naming layer itself.
+
+See `meta-examples/spec.md` ME12 (first propagation event: adding the trace plate) for the pattern template; this registry migration is its sibling.
+
 ## Meta-observation
 
-This spec is itself an instance of the lesson it was written to describe. A reader who asks *"which spec teaches me observability?"* finds `visual-qa-loop`. A reader who asks *"which teaching is this comic delivering?"* finds `lessons`. The lesson layer is the observability-of-the-observability — it tells the reader not what the code is doing but what the artefact is trying to teach. See `meta-examples/spec.md` ME13.
+This spec is itself an instance of the lesson it was written to describe. A reader who asks *"which spec teaches me observability?"* finds `visual-qa-loop`. A reader who asks *"which teaching is this comic delivering?"* finds a per-lesson spec under `lessons/Sn-NNN-slug/`. The lesson layer is the observability-of-the-observability — it tells the reader not what the code is doing but what the artefact is trying to teach. See `meta-examples/spec.md` ME13.
 
 ## Trace
 
 `@trace spec:lessons`
-`@Lesson lesson_proof_by_self_reference`
+`@Lesson S1-1400`

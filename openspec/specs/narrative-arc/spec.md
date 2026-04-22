@@ -10,7 +10,7 @@ The dramatic shape of the season. Sits above `concept-curriculum` (which is the 
 
 - **Acts 1–3 (TT #01–04)**: Confident chaos. Covi thinks they're doing great. Each strip they're gently surprised. Humor comes from the gap between their confidence and reality.
 - **Acts 4–7 (TT #05–08)**: Structural awakening. Covi starts asking questions. Humor shifts from "Covi is wrong" to "Covi is trying" — we laugh *with* them now.
-- **Acts 8–11 (TT #09–12)**: Fluency. Covi starts recognizing patterns before Tlatoāni names them. Tlatoāni begins to smile more, speak less.
+- **Acts 8–11 (TT #09–12)**: Fluency. Covi starts recognizing patterns before Tlatoāni names them. Tlatoāni begins to smile more, speak less. `S1-950` (dashboards-must-add-observability, strip TT #09.5) inserts between S1-900 and S1-1000 in the arc and serves as the emotional/structural pivot into the deepening observability arc — the moment Covi's first proud artefact (a dashboard) is gently revealed to still be a louder log, and the arc commits to what observability actually *adds*.
 - **Finale (TT #13)**: Covi *teaches the reader* by asking the AI a phrase. Tlatoāni is present but quiet. The reader realizes they could ask the same thing.
 - **Coda (TT #14)**: a skeptic voice enters off-panel — "You can't apply this anywhere." Covi answers cheerfully: "Of course you can! This comic was!" Panel 3 shows the repo URL rendered as a small scroll in Tlatoāni's notebook. This strip is the proof by self-reference: the artefact teaches by existing.
 
@@ -35,3 +35,4 @@ The dramatic shape of the season. Sits above `concept-curriculum` (which is the 
 ## Trace
 
 `@trace spec:narrative-arc`
+`@Lesson S1-1400`

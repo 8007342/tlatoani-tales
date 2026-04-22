@@ -51,6 +51,10 @@ For each rendered panel, emit a JSON drift report:
     { "id": "plate.lesson-legible",     "spec": "trace-plate",     "pass": true,  "confidence": 0.90 },
     { "id": "plate.lesson-slug-valid",  "spec": "lessons",         "pass": true,  "confidence": 0.96, "note": "slug is in registry" },
     { "id": "plate.lesson-spec-aligned","spec": "lessons",         "pass": true,  "confidence": 0.88, "note": "declared spec is in lesson's coverage list" },
+    { "id": "plate.title-present",            "spec": "trace-plate", "pass": true,  "confidence": 0.92, "note": "top-left title plate present" },
+    { "id": "plate.title-legible",            "spec": "trace-plate", "pass": true,  "confidence": 0.90, "note": "title text parses cleanly" },
+    { "id": "plate.title-matches-declared",   "spec": "trace-plate", "pass": true,  "confidence": 0.89, "note": "matches proposal.md title field" },
+    { "id": "plate.title-position-valid",     "spec": "trace-plate", "pass": true,  "confidence": 0.91, "note": "top-left by default, or right-floated if declared in proposal" },
     { "id": "plate.symmetry",           "spec": "trace-plate",     "pass": true,  "confidence": 0.90 }
   ],
   "drift_score": 0.14,
@@ -59,6 +63,8 @@ For each rendered panel, emit a JSON drift report:
 ```
 
 **drift_score** = weighted sum of failed checks × (1 - confidence). Range 0.0–1.0.
+
+Alongside the trace, lesson, and episode plate checks, the `plate.title-*` checks enforce *title-plate observability*: a top-left title plate must be present, legible, match the `title` field declared in the strip's `proposal.md`, and sit in the top-left region by default (or intentionally right-floated if — and only if — the proposal declares so). The title plate is the strip's first line of in-frame observability; it earns the same VLM scrutiny as the lesson and trace plates.
 
 ## Thresholds
 
@@ -106,3 +112,4 @@ Each strip's dir contains `qa-log.jsonl` — one line per iteration per panel. O
 ## Trace
 
 `@trace spec:visual-qa-loop, spec:concept-curriculum`
+`@Lesson S1-800`
