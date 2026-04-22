@@ -1,0 +1,15 @@
+# Local image-gen runtime — installed per-machine, never committed
+tools/
+
+# Ephemeral outputs — regenerated from specs + cache every run
+output/
+cache/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+*.swp
