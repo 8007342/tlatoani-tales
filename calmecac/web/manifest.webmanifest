@@ -1,0 +1,17 @@
+{
+  "name": "Tlatoāni Tales Calmecac",
+  "short_name": "Calmecac",
+  "description": "The upstairs library of Tlatoāni Tales — follow a strip to its Lessons and Rules.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F4E9D3",
+  "background_color": "#F4E9D3",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "./assets/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "./assets/icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

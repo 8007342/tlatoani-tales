@@ -1,0 +1,79 @@
+/* Comic view: strip with clickable plate hotspots.
+   @trace spec:calmecac, spec:trace-plate */
+
+.comic-view .strip {
+  position: relative;
+  margin: 0 0 var(--space-6);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--covi);
+}
+
+.comic-view .strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.comic-view .hotspots {
+  position: absolute;
+  inset: 0;
+}
+
+.comic-view .hotspot {
+  position: absolute;
+  display: block;
+  border: 2px dashed transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-decoration: none;
+  color: transparent;
+}
+.comic-view .hotspot:hover,
+.comic-view .hotspot:focus-visible {
+  background: rgba(249, 240, 220, 0.35);
+  border-color: var(--crown);
+  outline: none;
+}
+.comic-view .hotspot .label {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.comic-view .hotspot:hover .label,
+.comic-view .hotspot:focus-visible .label { opacity: 1; }
+
+.comic-view .quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.comic-view .caption {
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-bottom: var(--space-4);
+}
+
+.comic-view .strip-meta dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+.comic-view .strip-meta dt { color: var(--ink-muted); font-size: 0.9rem; }
+.comic-view .strip-meta dd { margin: 0; }

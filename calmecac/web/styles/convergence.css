@@ -1,0 +1,58 @@
+/* Convergence view: boring dashboards, by design.
+   @trace spec:calmecac */
+
+.convergence-view .dashboards {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.convergence-view .dash {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.convergence-view .dash h3 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.convergence-view .dash .metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  margin-bottom: var(--space-2);
+}
+.convergence-view .dash .metric strong {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+.convergence-view .spark {
+  width: 100%;
+  height: 60px;
+  display: block;
+}
+.convergence-view .spark path { fill: none; stroke: var(--tunic); stroke-width: 1.5; }
+.convergence-view .spark circle { fill: var(--crown); }
+
+.convergence-view .last-change {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  font-style: italic;
+  margin-top: var(--space-2);
+}
+
+.convergence-view .boring-preamble {
+  border-left: 3px solid var(--ink-ghost);
+  padding-left: var(--space-4);
+  color: var(--ink-muted);
+  font-style: italic;
+  margin-bottom: var(--space-6);
+}

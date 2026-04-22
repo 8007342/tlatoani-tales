@@ -2592,6 +2592,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "futures",
+ "serde_json",
  "tokio",
  "tracing",
  "tt-calmecac-indexer",
@@ -2602,9 +2604,12 @@ dependencies = [
 name = "tt-calmecac-indexer"
 version = "0.1.0"
 dependencies = [
+ "regex",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror 1.0.69",
+ "time",
  "tokio",
  "tt-core",
  "tt-specs",
@@ -2757,6 +2762,7 @@ dependencies = [
  "tt-qa",
  "tt-specs",
  "tt-telemetry",
+ "url",
 ]
 
 [[package]]

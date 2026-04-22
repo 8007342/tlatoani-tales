@@ -25,6 +25,11 @@ Every committed file in the repo MUST match exactly one rule below. Unmatched fi
 | R09 | `LICENSE`, `LICENSE-ART` | *(verbatim upstream — see inside each file)* | License texts themselves are not relicensable |
 | R10 | `.gitignore`, `.gitattributes` | CC0 | Git metadata — public domain-ish |
 | R11 | `README.md` | CC BY-SA 4.0 | Matches R04; explicitly listed for readers skimming this table |
+| R12 | `calmecac/**` | GPL-3.0-or-later | Calmecac PWA (HTML, JS, CSS, webmanifest, service worker) at any depth — functional UI, copyleft |
+| R13 | `images/**/Containerfile` | GPL-3.0-or-later | Hardened container definitions — functional infrastructure |
+| R14 | `**/*.lock`, `Cargo.lock` | GPL-3.0-or-later | Reproducibility artefacts for the Rust workspace |
+| R15 | `**/.gitkeep` | CC0 | Git directory-marker convention |
+| R16 | `crates/**/src/**/*.html` | GPL-3.0-or-later | Embedded HTML templates included via `include_str!` into Rust binaries |
 
 ## How the CRDT property plays out
 

@@ -328,6 +328,32 @@ fn licensing_rule_match(rel_path: &Path) -> Option<&'static str> {
         return Some("R01");
     }
 
+    // R12 — calmecac/** PWA bundle (HTML, JS, CSS, webmanifest, service worker).
+    if s.starts_with("calmecac/") {
+        return Some("R12");
+    }
+
+    // R13 — images/<role>/Containerfile.
+    if s.starts_with("images/") && name == "Containerfile" {
+        return Some("R13");
+    }
+
+    // R14 — lockfiles (Cargo.lock, flake.lock, etc.).
+    if s.ends_with(".lock") || name == "Cargo.lock" {
+        return Some("R14");
+    }
+
+    // R15 — .gitkeep sentinel files (also matched by R10 above, but listed
+    // explicitly in the table at R15 for readers skimming).
+    if name == ".gitkeep" {
+        return Some("R15");
+    }
+
+    // R16 — HTML under crates/*/src/** (include_str! template resources).
+    if s.starts_with("crates/") && s.ends_with(".html") {
+        return Some("R16");
+    }
+
     // Extension-driven rules.
     if s.ends_with(".sh") {
         return Some("R02");
@@ -885,21 +911,37 @@ pub fn check_isolation_flags(project_dir: &Path, report: &mut LintReport) {
             continue;
         };
 
-        for (i, line) in text.lines().enumerate() {
+        let lines: Vec<&str> = text.lines().collect();
+        for (i, line) in lines.iter().enumerate() {
             if !is_shell_podman_run_invocation(line) {
                 continue;
             }
             // Look at the invocation as a multi-line window — shell argv
             // is often broken across backslash-continuation lines. We
             // grab the next 40 lines as context.
-            let window = text
-                .lines()
+            let window = lines
+                .iter()
                 .skip(i)
                 .take(40)
+                .copied()
                 .collect::<Vec<_>>()
                 .join("\n");
 
+            // Check the preceding 5 lines for a role-exempt pragma. The
+            // viewer role legitimately omits `--network=none` (it must
+            // accept inbound HTTP) and `--rm` (start/stop lifecycle keeps
+            // the container between script invocations). See
+            // isolation/spec.md §Viewer-role exemption.
+            let pre_start = i.saturating_sub(5);
+            let preceding = lines[pre_start..i].join("\n");
+            let is_viewer_role = preceding.contains("# tt-lint: viewer-role");
+
             for required in podman::DEFAULT_FLAGS {
+                if is_viewer_role
+                    && (*required == "--network=none" || *required == "--rm")
+                {
+                    continue;
+                }
                 if !window.contains(required) {
                     report.add_violation(
                         LintRule::IsolationFlags,

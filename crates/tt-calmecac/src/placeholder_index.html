@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!--
+  Tlatoāni Tales — Calmecac placeholder.
+
+  This file ships only when the authored PWA bundle at `calmecac/web/` is
+  not yet present in the repo. It exists so the hardened viewer container
+  has something to serve — a concept-level "still converging" message,
+  not a 404.
+
+  @trace spec:calmecac
+  @Lesson S1-1000
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calmecac · Tlatoāni Tales</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: #1b1a17;
+        color: #ede9dd;
+      }
+      main {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+      }
+      h1 { font-size: 1.8rem; margin: 0 0 0.5rem; }
+      p  { max-width: 32rem; line-height: 1.55; }
+      small { opacity: 0.65; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Calmecac is still converging.</h1>
+      <p>
+        The concept index has been generated, but the reader-facing pages
+        have not yet been authored in this checkout. Re-run the build once
+        the PWA shell is in place.
+      </p>
+      <p><small>— The upstairs library</small></p>
+    </main>
+  </body>
+</html>

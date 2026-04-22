@@ -1,0 +1,206 @@
+{
+  "generated_at": "2026-04-21",
+  "last_change": {
+    "date": "2026-04-21",
+    "subject": "Calmecac viewer bundle authored; trace plates and Lesson chips wired"
+  },
+  "lessons": [
+    {
+      "id": "S1-100-volatile-is-dangerous",
+      "short_id": "S1-100",
+      "display": "Volatile is dangerous",
+      "takeaway": "Starting fresh loses everything that mattered.",
+      "abstract": "The comic opens with a warning: context that is not saved is context that is lost. The first teaching of Season 1 gives the reader a reason to care about every tool that comes next.",
+      "aha": "You already knew this from the laptop that crashed mid-draft. The comic only names what you felt.",
+      "primary_strip": "01",
+      "predecessors": [],
+      "successors": [{ "id": "S1-200-save-means-findable", "short_id": "S1-200", "display": "Save means findable" }],
+      "rules": [{ "name": "concept-curriculum" }]
+    },
+    {
+      "id": "S1-1000-dashboards-must-add-observability",
+      "short_id": "S1-1000",
+      "display": "Dashboards must add observability",
+      "takeaway": "Real dashboards add observability, not just display it.",
+      "abstract": "A dashboard that restates the raw signal is a screensaver. A real dashboard adds the reasoning scaffold — the relationship that makes the signal mean something.",
+      "aha": "The strip you finished reading is itself the dashboard the strip is about.",
+      "primary_strip": "10",
+      "predecessors": [{ "id": "S1-900-logs-are-ingredients", "short_id": "S1-900", "display": "Logs are ingredients" }],
+      "successors": [{ "id": "S1-1100-shape-has-meaning", "short_id": "S1-1100", "display": "Shape has meaning" }],
+      "rules": [{ "name": "visual-qa-loop" }, { "name": "calmecac" }]
+    },
+    {
+      "id": "S1-1500-proof-by-self-reference",
+      "short_id": "S1-1500",
+      "display": "Proof by self-reference",
+      "takeaway": "This comic was made that way.",
+      "abstract": "The final teaching is that the comic's process is the comic's proof. What you read was rendered by the method it describes.",
+      "aha": "The viewer you are holding is itself an instance of the lesson.",
+      "primary_strip": "15",
+      "predecessors": [{ "id": "S1-1400-monotonic-convergence", "short_id": "S1-1400", "display": "Monotonic convergence" }],
+      "successors": [],
+      "rules": [{ "name": "meta-examples" }, { "name": "calmecac" }]
+    }
+  ],
+  "rules": [
+    {
+      "name": "calmecac",
+      "kind": "process",
+      "role": "The reader-facing observability viewer — how the comic is made becomes visible.",
+      "lessons": [
+        { "id": "S1-1000-dashboards-must-add-observability", "short_id": "S1-1000" },
+        { "id": "S1-1500-proof-by-self-reference", "short_id": "S1-1500" }
+      ],
+      "cites": ["trace-plate", "lessons", "tombstones", "style-bible"],
+      "convergence": {
+        "body_length": [120, 180, 260, 310, 380, 420, 418, 420],
+        "citation_count": [1, 2, 3, 5, 7, 8, 9, 11]
+      },
+      "last_change_summary": "Calmecac viewer bundle authored, 2026-04-21"
+    },
+    {
+      "name": "trace-plate",
+      "kind": "visual",
+      "role": "Every strip carries three plates: Title, Lesson+Trace, Episode.",
+      "lessons": [
+        { "id": "S1-1500-proof-by-self-reference", "short_id": "S1-1500" }
+      ],
+      "cites": ["style-bible", "lessons"],
+      "gallery": [
+        {
+          "caption": "Strip 01 — [Volatile is dangerous]",
+          "strip_episode": "01",
+          "alt_text": "Title plate on strip 01 reading 'Volatile is dangerous'"
+        }
+      ],
+      "convergence": {
+        "body_length": [80, 120, 150, 200, 230],
+        "citation_count": [1, 2, 4, 6, 8]
+      }
+    },
+    {
+      "name": "style-bible",
+      "kind": "visual",
+      "role": "Canonical visual and tonal rules for every strip.",
+      "lessons": [],
+      "cites": [],
+      "gallery": [],
+      "convergence": {
+        "body_length": [40, 60, 55, 65, 70],
+        "citation_count": [1, 2, 3, 4, 5]
+      }
+    },
+    {
+      "name": "tombstones",
+      "kind": "process",
+      "role": "A retired identifier is forever legible.",
+      "lessons": [],
+      "cites": ["lessons"],
+      "convergence": {
+        "body_length": [30, 80, 110, 125],
+        "citation_count": [1, 3, 5, 7]
+      }
+    }
+  ],
+  "strips": [
+    {
+      "episode": "01",
+      "episode_total": "15",
+      "title": "Volatile is dangerous",
+      "subtitle": "Tlatoāni opens the scroll on a warning.",
+      "primary_lesson": "S1-100-volatile-is-dangerous",
+      "primary_rule": "trace-plate",
+      "reinforced_lessons": [],
+      "image_url": "",
+      "image_width": 1920,
+      "image_height": 1040,
+      "plate_regions": {
+        "title": { "x": 0, "y": 0, "w": 620, "h": 140 },
+        "trace_lesson": {
+          "x": 0, "y": 860, "w": 780, "h": 180,
+          "lesson_line": { "x": 12, "y": 872, "w": 760, "h": 78 },
+          "trace_line":  { "x": 12, "y": 958, "w": 760, "h": 72 }
+        },
+        "episode": { "x": 1180, "y": 860, "w": 720, "h": 180 }
+      },
+      "alt_text": "Three-panel strip: Tlatoāni at a scroll; Covi looking on; a closing warning in panel three.",
+      "date": "2026-04-10"
+    },
+    {
+      "episode": "10",
+      "episode_total": "15",
+      "title": "Dashboards must add observability",
+      "primary_lesson": "S1-1000-dashboards-must-add-observability",
+      "primary_rule": "visual-qa-loop",
+      "reinforced_lessons": ["S1-900-logs-are-ingredients"],
+      "image_url": "",
+      "image_width": 1920,
+      "image_height": 1040,
+      "alt_text": "Three-panel strip about real dashboards adding observability.",
+      "date": "2026-04-15"
+    },
+    {
+      "episode": "15",
+      "episode_total": "15",
+      "title": "Proof by self-reference",
+      "primary_lesson": "S1-1500-proof-by-self-reference",
+      "primary_rule": "meta-examples",
+      "reinforced_lessons": ["S1-1000-dashboards-must-add-observability"],
+      "image_url": "",
+      "image_width": 1920,
+      "image_height": 1040,
+      "alt_text": "Three-panel strip: the final teaching.",
+      "date": "2026-04-20"
+    }
+  ],
+  "seeds": [],
+  "tombstones": [
+    {
+      "id": "S1-1000-shape-has-meaning",
+      "date": "2026-04-22",
+      "reason": "Renumbered for Season 1 sequential convergence.",
+      "successor": "S1-1100-shape-has-meaning",
+      "successor_kind": "lesson"
+    },
+    {
+      "id": "lesson_volatile_is_dangerous",
+      "date": "2026-04-22",
+      "reason": "Legacy slug form tombstoned; every citation migrates to the Sn-NNN form.",
+      "successor": "S1-100-volatile-is-dangerous",
+      "successor_kind": "lesson"
+    },
+    {
+      "id": "ME10",
+      "date": "2026-03-18",
+      "reason": "Candidate observation declined by author; the tombstone itself teaches the mechanic.",
+      "successor": null
+    }
+  ],
+  "changes": [
+    {
+      "change_id": "a1b2c3d",
+      "date": "2026-04-21",
+      "subject": "Author the Calmecac viewer bundle",
+      "tags": ["@trace rule:calmecac", "@Lesson S1-1000", "@Lesson S1-1500"],
+      "touches_strips": [],
+      "archive_url": "https://github.com/8007342/tlatoani-tales/commit/a1b2c3d"
+    },
+    {
+      "change_id": "e4f5g6h",
+      "date": "2026-04-18",
+      "subject": "Tombstone the legacy Lesson slug form; migrate every citation",
+      "tags": ["@trace rule:tombstones", "@trace rule:lessons", "@Lesson S1-500"],
+      "touches_strips": [],
+      "archive_url": "https://github.com/8007342/tlatoani-tales/commit/e4f5g6h"
+    },
+    {
+      "change_id": "i7j8k9l",
+      "date": "2026-04-15",
+      "subject": "Render strip 10 with the three-plate layout",
+      "tags": ["@trace rule:trace-plate", "@trace rule:style-bible", "@Lesson S1-1000"],
+      "touches_strips": ["10"],
+      "archive_url": "https://github.com/8007342/tlatoani-tales/commit/i7j8k9l"
+    }
+  ],
+  "edges": []
+}

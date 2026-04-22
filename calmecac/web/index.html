@@ -1,0 +1,61 @@
+<!doctype html>
+<!--
+  Tlatoāni Tales — Calmecac viewer
+  @trace spec:calmecac, spec:trace-plate, spec:lessons, spec:tombstones, spec:style-bible
+  @Lesson S1-1000
+  @Lesson S1-1500
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#F4E9D3" />
+  <meta name="description" content="Tlatoāni Tales — Calmecac. The upstairs library: see how each strip was made, the Lessons it serves, the Rules that govern its pixels." />
+  <title>Tlatoāni Tales — Calmecac</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg" />
+  <link rel="stylesheet" href="./styles/base.css" />
+  <link rel="stylesheet" href="./styles/comic-view.css" />
+  <link rel="stylesheet" href="./styles/lesson-view.css" />
+  <link rel="stylesheet" href="./styles/rule-view.css" />
+  <link rel="stylesheet" href="./styles/convergence.css" />
+  <link rel="stylesheet" href="./styles/graph.css" />
+  <link rel="stylesheet" href="./styles/tombstones.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-head" role="banner">
+    <div class="brand">
+      <a href="#/" aria-label="Calmecac home">
+        <span class="brand-mark" aria-hidden="true">𓂀</span>
+        <span class="brand-word">Tlatoāni Tales · Calmecac</span>
+      </a>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#/">Home</a>
+      <a href="#/convergence">Convergence</a>
+      <a href="#/graph">Graph</a>
+      <a href="#/tombstones">Tombstones</a>
+    </nav>
+    <label class="progress-gate" title="Which seasons have you finished?">
+      <span class="progress-gate-label">Reader progress</span>
+      <select id="reader-progress" aria-label="Reader progress">
+        <option value="s1">Season 1</option>
+        <option value="s1s2">Season 1 + 2</option>
+      </select>
+    </label>
+  </header>
+
+  <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+  <main id="main" class="main" tabindex="-1" aria-live="polite"></main>
+
+  <footer class="site-foot" role="contentinfo">
+    <p>The upstairs library. <a href="#/">Home</a> · <a href="#/graph">Graph</a> · <a href="#/convergence">Convergence</a></p>
+    <p class="abstraction-pledge">The archive is visible only by explicit request. No mechanism names live in these halls.</p>
+  </footer>
+
+  <script type="module" src="./scripts/main.js"></script>
+</body>
+</html>

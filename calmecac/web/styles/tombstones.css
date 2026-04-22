@@ -1,0 +1,47 @@
+/* Tombstones view: retired entries — grey, reachable, not hidden.
+   @trace spec:calmecac, spec:tombstones */
+
+.tombstones-view table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tombstones-view thead th {
+  text-align: left;
+  border-bottom: 2px solid var(--rule);
+  padding: var(--space-2);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.tombstones-view tbody tr {
+  border-bottom: 1px dashed var(--rule);
+  color: var(--ink-muted);
+}
+
+.tombstones-view tbody td { padding: var(--space-2); vertical-align: top; }
+
+.tombstones-view tbody .retired-id {
+  font-family: var(--font-mono);
+  text-decoration: line-through;
+  color: var(--ink-ghost);
+}
+.tombstones-view tbody .successor {
+  font-family: var(--font-mono);
+}
+.tombstones-view tbody .successor a { color: var(--ink); }
+.tombstones-view tbody .reason { font-style: italic; }
+.tombstones-view tbody .date { font-family: var(--font-mono); font-size: 0.85rem; white-space: nowrap; }
+
+.tombstones-view .decline {
+  color: var(--ink-ghost);
+  font-style: italic;
+}
+
+.tombstones-view .preamble {
+  margin-bottom: var(--space-6);
+  color: var(--ink-soft);
+  border-left: 3px solid var(--ink-ghost);
+  padding-left: var(--space-4);
+}
