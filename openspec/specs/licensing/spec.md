@@ -51,6 +51,16 @@ Every committed file in the repo MUST match exactly one rule below. Unmatched fi
 
 If two rules match the same file, the spec is inconsistent and MUST be fixed before the next commit. Orchestrator-side lint (future): walk the tree, match each file against the table, flag 0-match or ≥2-match cases.
 
+## Planned convergence — REUSE compliance
+
+GitHub currently auto-detects only the file literally named `LICENSE` (GPL-3.0-or-later) and not `LICENSE-ART`. Machine-readable detection of the dual structure requires the **REUSE specification** (reuse.software): SPDX headers per source file + a top-level `LICENSES/` directory. Migration is monotonic:
+
+1. *Current state (coarse)*: pattern-scoped rules in this table. (Today.)
+2. *Intermediate*: top-level `LICENSES/` directory with canonical texts, preserved in parallel with `LICENSE` / `LICENSE-ART` for backwards compatibility.
+3. *Final (fine-grained)*: SPDX short-form headers on every file (`SPDX-License-Identifier: GPL-3.0-or-later` etc.), `.reuse/dep5` for files that can't carry headers (binaries, generated art). GitHub and third-party tools read this automatically.
+
+Each step strictly refines the previous — no rule is invalidated, only made more precise. This is C06 (specs are the contract) plus C07 (iteration with aim) expressed on the licensing layer itself. Catalogued in `meta-examples/spec.md` as ME04.
+
 ## Trace
 
-`@trace spec:licensing`
+`@trace spec:licensing, spec:meta-examples`
