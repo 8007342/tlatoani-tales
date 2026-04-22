@@ -1,0 +1,188 @@
+# Tlatoāni Tales — UNTRUSTED inference image.
+#
+# ComfyUI + FLUX + Qwen-Image + ollama (VLM), one container, two ports.
+# Rendered panels flow out via a scoped rw bind mount; model weights flow
+# in via a ro bind mount. No network at render time — this Containerfile
+# builds the image; `podman run` enforces the runtime posture (see
+# tt-podman::DEFAULT_FLAGS in the trusted zone).
+#
+# This image never compensates for runtime flags. `--cap-drop=ALL`,
+# `--read-only`, `--network=none`, `--userns=keep-id`, `--device
+# nvidia.com/gpu=all` are the caller's responsibility per isolation/spec.md.
+#
+# @trace spec:isolation, spec:orchestrator, spec:visual-qa-loop
+# @Lesson S1-1000  (observability-reliant stack — ComfyUI and ollama both
+#                   speak HTTP so tt-comfy and tt-qa can observe them)
+# @Lesson S1-1500  (proof-by-self-reference — offline inference is verifiable
+#                   from the flags at the crossing, not from documentation)
+
+# TODO(pin): fedora-minimal:latest rolls with the distro; pin to a concrete
+# Fedora release (e.g. :41) once the author settles a rebuild cadence.
+FROM registry.fedoraproject.org/fedora-minimal:latest
+
+LABEL role="inference"
+LABEL project="tlatoani-tales"
+LABEL description="UNTRUSTED ComfyUI + FLUX + Qwen-Image + ollama VLM"
+LABEL zone="untrusted"
+
+# --- Environment --------------------------------------------------------------
+# Non-interactive package ops; deterministic pip; keep pip cache out of the
+# final layer (we strip it below anyway, but the env var keeps builds reproducible).
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    COMFY_HOME=/opt/ComfyUI \
+    OLLAMA_HOST=127.0.0.1:11434 \
+    OLLAMA_MODELS=/opt/ollama/models \
+    HF_HOME=/opt/ComfyUI/.hf-cache \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1
+
+# --- System deps --------------------------------------------------------------
+# microdnf is fedora-minimal's native package manager; dnf itself is not
+# pre-installed here. Using microdnf keeps the image lean.
+#
+# We install build tooling (gcc, make, glibc-devel, python3-devel) only
+# long enough to compile the handful of pip wheels that still build from
+# source on FLUX/ComfyUI dependency trees, then strip them in the same
+# layer so they don't persist as attack surface.
+#
+# ca-certificates is required for pip's HTTPS index during build.
+# curl is required to fetch the ollama binary. tar is required to unpack it.
+# shadow-utils gives us useradd/groupadd for the non-root account.
+RUN microdnf install -y --nodocs --setopt=install_weak_deps=0 \
+        python3.12 \
+        python3.12-devel \
+        python3-pip \
+        git \
+        gcc \
+        gcc-c++ \
+        make \
+        glibc-devel \
+        libstdc++ \
+        ca-certificates \
+        curl \
+        tar \
+        xz \
+        shadow-utils \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum /var/cache/dnf
+
+# --- Non-root user ------------------------------------------------------------
+# UID/GID 10001 — well above the distro's system range and well below the
+# 65k bound that common kernel configs keep mappable. `--userns=keep-id`
+# at runtime will map this into the author's host UID.
+RUN groupadd --system --gid 10001 tlatoani \
+    && useradd  --system --uid 10001 --gid 10001 \
+                --home-dir /opt/ComfyUI --shell /sbin/nologin tlatoani
+
+# --- ollama binary ------------------------------------------------------------
+# We install ollama's standalone binary rather than running the upstream
+# install script — the script expects systemd, user creation, and GPU drivers
+# on the host, none of which belong inside a hardened container image. The
+# .tgz bundle is the supported offline path.
+#
+# TODO(pin): pin an ollama release (e.g. v0.4.x) with SHA-256 verification
+# once the author settles on a version. Tracking :latest drifts.
+RUN set -eux; \
+    mkdir -p /opt/ollama/models /opt/ollama/bin; \
+    curl -fsSL --retry 3 \
+        https://ollama.com/download/ollama-linux-amd64.tgz \
+        -o /tmp/ollama.tgz; \
+    tar -C /opt/ollama -xzf /tmp/ollama.tgz; \
+    rm -f /tmp/ollama.tgz; \
+    # Upstream tarball lays out bin/ and lib/; ensure the binary is on PATH.
+    if [ -x /opt/ollama/bin/ollama ]; then \
+        ln -sf /opt/ollama/bin/ollama /usr/local/bin/ollama; \
+    fi; \
+    ollama --version
+
+# --- ComfyUI ------------------------------------------------------------------
+# We clone ComfyUI at build time so the image is self-contained. Model
+# weights are NOT baked in — they arrive through the read-only bind mount
+# at /opt/ComfyUI/models per isolation/spec.md.
+#
+# TODO(pin): pin a ComfyUI commit SHA. `--depth 1` takes HEAD which drifts.
+RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git ${COMFY_HOME}
+
+# venv + PyTorch (CUDA 12.4 wheels — matches bootstrap-comfyui.sh, forward-
+# compat with driver 580 / CUDA 13). The venv lives inside COMFY_HOME so
+# --read-only at runtime still works: the venv is not written to after build.
+RUN set -eux; \
+    python3.12 -m venv ${COMFY_HOME}/.venv; \
+    . ${COMFY_HOME}/.venv/bin/activate; \
+    pip install --upgrade pip wheel setuptools; \
+    pip install torch torchvision \
+        --index-url https://download.pytorch.org/whl/cu124; \
+    pip install -r ${COMFY_HOME}/requirements.txt; \
+    deactivate
+
+# --- Entrypoint ---------------------------------------------------------------
+# Tiny shell launcher that starts ollama in the background (for tt-qa) and
+# ComfyUI in the foreground (for tt-comfy). Both bind to localhost only;
+# `podman run` will forward the ports as needed. When ComfyUI exits the
+# trap tears ollama down so the container doesn't linger.
+#
+# Written inline via a heredoc to keep the launcher auditable from the
+# Containerfile itself.
+RUN mkdir -p /usr/local/bin && \
+    printf '%s\n' \
+        '#!/bin/sh' \
+        '# tlatoani-tales inference entrypoint.' \
+        '# @trace spec:isolation, spec:orchestrator' \
+        'set -eu' \
+        '' \
+        ': "${COMFY_HOME:=/opt/ComfyUI}"' \
+        ': "${OLLAMA_HOST:=127.0.0.1:11434}"' \
+        ': "${COMFY_HOST:=127.0.0.1}"' \
+        ': "${COMFY_PORT:=8188}"' \
+        '' \
+        '# Start ollama in the background. Bound to localhost.' \
+        'ollama serve &' \
+        'OLLAMA_PID=$!' \
+        '' \
+        'cleanup() {' \
+        '  if kill -0 "$OLLAMA_PID" 2>/dev/null; then' \
+        '    kill "$OLLAMA_PID" 2>/dev/null || true' \
+        '    wait "$OLLAMA_PID" 2>/dev/null || true' \
+        '  fi' \
+        '}' \
+        'trap cleanup EXIT INT TERM' \
+        '' \
+        '# ComfyUI in the foreground. PID 1 substitution via exec so' \
+        '# podman stop forwards SIGTERM to it directly.' \
+        'cd "$COMFY_HOME"' \
+        'exec "$COMFY_HOME/.venv/bin/python" "$COMFY_HOME/main.py" \' \
+        '  --listen "$COMFY_HOST" \' \
+        '  --port "$COMFY_PORT"' \
+        > /usr/local/bin/inference-entrypoint.sh && \
+    chmod 0555 /usr/local/bin/inference-entrypoint.sh
+
+# --- Strip build toolchain ----------------------------------------------------
+# Remove the compilers now that every pip wheel is in place. Done in its own
+# layer so the preceding layers' deps can be cached across rebuilds while the
+# final image stays lean. `microdnf clean all` + rm'd caches complete the trim.
+RUN microdnf remove -y \
+        gcc \
+        gcc-c++ \
+        make \
+        glibc-devel \
+        python3.12-devel \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum /var/cache/dnf /tmp/* /root/.cache
+
+# --- Filesystem ownership -----------------------------------------------------
+# ComfyUI writes to its own subdirs (temp, input, output, .hf-cache) during
+# runtime; with --read-only at runtime these will be tmpfs overlays or
+# scoped rw bind mounts, but build-time ownership still needs to be correct.
+RUN chown -R 10001:10001 /opt/ComfyUI /opt/ollama
+
+# --- Ports (documentation only — podman -p controls actual binding) -----------
+EXPOSE 8188
+EXPOSE 11434
+
+# --- Final runtime posture ----------------------------------------------------
+USER 10001:10001
+WORKDIR /opt/ComfyUI
+ENTRYPOINT ["/usr/local/bin/inference-entrypoint.sh"]

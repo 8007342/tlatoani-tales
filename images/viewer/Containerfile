@@ -1,0 +1,139 @@
+# Tlatoāni Tales — UNTRUSTED viewer image.
+#
+# Industry-standard httpd serving the static Calmecac bundle. Everything
+# dynamic about Calmecac is client-side after the initial load; this
+# container is a file server, nothing more. The author directive is
+# explicit: we do not author the HTTP server. We stop at the boundary
+# and use the distribution's httpd (per calmecac/spec.md §Wisdom-is-
+# knowing-where-to-stop).
+#
+# The bundle (output/calmecac-bundle/) is produced by trusted Rust
+# (tt-calmecac-indexer). It arrives here through a read-only bind mount.
+# No writable paths inside the container; no code executes beyond the
+# httpd itself.
+#
+# Target image size: < 200 MB. We install only httpd and its direct
+# dependencies; no build tooling, no Python, no scripting runtimes.
+#
+# @trace spec:isolation, spec:calmecac
+# @Lesson S1-1000  (observability-reliant stack — the viewer IS the
+#                   project's observability surface, served out of a
+#                   container whose discipline the viewer teaches about)
+# @Lesson S1-1500  (proof-by-self-reference — the viewer's own container
+#                   posture matches the podman-run-drop-privileges lesson
+#                   it will cite one level up from every Rule dashboard)
+
+# TODO(pin): fedora-minimal:latest rolls with the distro; pin once the
+# author settles a rebuild cadence.
+FROM registry.fedoraproject.org/fedora-minimal:latest
+
+LABEL role="viewer"
+LABEL project="tlatoani-tales"
+LABEL description="UNTRUSTED httpd serving the Calmecac static bundle"
+LABEL zone="untrusted"
+
+# --- System deps --------------------------------------------------------------
+# httpd only. No mod_ssl (TLS is terminated upstream in production; local
+# launcher binds 127.0.0.1 per calmecac/spec.md §Container-image). No CGI
+# modules — Calmecac is static. shadow-utils for useradd/groupadd.
+RUN microdnf install -y --nodocs --setopt=install_weak_deps=0 \
+        httpd \
+        shadow-utils \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum /var/cache/dnf
+
+# --- Non-root user ------------------------------------------------------------
+# UID/GID 10001 consistent with the inference and trainer images so the
+# three roles share one numeric identity convention — `--userns=keep-id`
+# maps the same host UID across all three at runtime.
+RUN groupadd --system --gid 10001 tlatoani \
+    && useradd  --system --uid 10001 --gid 10001 \
+                --home-dir /var/www --shell /sbin/nologin tlatoani
+
+# --- httpd configuration ------------------------------------------------------
+# Fedora's httpd defaults assume port 80 (privileged) and a bunch of
+# conf.d/*.conf modules we don't need. We rewrite the minimal config
+# inline so everything this image does is visible in one file.
+#
+# Port 8080 — not 80, because --cap-drop=ALL drops CAP_NET_BIND_SERVICE
+# and the non-root UID cannot bind below 1024. The host port-forward is
+# where 80 or 8088 gets applied (the launcher script decides).
+#
+# DocumentRoot is /usr/local/apache2/htdocs/ per calmecac/spec.md, which
+# is the path the ro bind mount targets. We symlink it to Fedora's
+# /var/www/html layout so httpd's default config agrees with the spec's
+# canonical path — the bind-mount destination is the spec'd path.
+#
+# ServerTokens Prod + ServerSignature Off keeps the version out of
+# 404 pages; a defensive hygiene floor, not a security guarantee.
+RUN set -eux; \
+    mkdir -p /usr/local/apache2/htdocs; \
+    rm -rf /var/www/html; \
+    ln -s /usr/local/apache2/htdocs /var/www/html; \
+    # Clean out the stock conf.d drop-ins we do not need.
+    rm -f /etc/httpd/conf.d/welcome.conf \
+          /etc/httpd/conf.d/autoindex.conf \
+          /etc/httpd/conf.d/userdir.conf \
+          /etc/httpd/conf.d/ssl.conf; \
+    # Minimal main config. Inline so the Containerfile is self-documenting.
+    printf '%s\n' \
+        '# tlatoani-tales viewer httpd config.' \
+        '# @trace spec:isolation, spec:calmecac' \
+        'ServerRoot "/etc/httpd"' \
+        'ServerName  localhost' \
+        'Listen 8080' \
+        '' \
+        'LoadModule mpm_event_module   modules/mod_mpm_event.so' \
+        'LoadModule authz_core_module  modules/mod_authz_core.so' \
+        'LoadModule mime_module        modules/mod_mime.so' \
+        'LoadModule dir_module         modules/mod_dir.so' \
+        'LoadModule log_config_module  modules/mod_log_config.so' \
+        'LoadModule unixd_module       modules/mod_unixd.so' \
+        'LoadModule headers_module     modules/mod_headers.so' \
+        '' \
+        'User  tlatoani' \
+        'Group tlatoani' \
+        '' \
+        'ServerTokens    Prod' \
+        'ServerSignature Off' \
+        'TraceEnable     Off' \
+        '' \
+        'TypesConfig /etc/mime.types' \
+        'DocumentRoot "/usr/local/apache2/htdocs"' \
+        '' \
+        '<Directory "/">' \
+        '    AllowOverride none' \
+        '    Require all denied' \
+        '</Directory>' \
+        '' \
+        '<Directory "/usr/local/apache2/htdocs">' \
+        '    Options -Indexes -FollowSymLinks' \
+        '    AllowOverride None' \
+        '    Require all granted' \
+        '</Directory>' \
+        '' \
+        'DirectoryIndex index.html' \
+        '' \
+        '# Logs go to stderr/stdout so podman logs sees them. No on-disk' \
+        '# log files — --read-only at runtime would break them anyway.' \
+        'ErrorLog  /dev/stderr' \
+        'LogLevel  warn' \
+        'LogFormat "%h %l %u %t \"%r\" %>s %b" common' \
+        'CustomLog /dev/stdout common' \
+        '' \
+        '# Hardening headers — belt-and-braces, not compensating for' \
+        '# the runtime flags. Every strip served by Calmecac already' \
+        '# came from a trusted build pipeline.' \
+        'Header always set X-Content-Type-Options "nosniff"' \
+        'Header always set X-Frame-Options        "SAMEORIGIN"' \
+        'Header always set Referrer-Policy        "no-referrer"' \
+        > /etc/httpd/conf/httpd.conf; \
+    chown -R 10001:10001 /usr/local/apache2 /var/www /var/log/httpd /run/httpd
+
+# --- Ports (documentation only) -----------------------------------------------
+EXPOSE 8080
+
+# --- Final runtime posture ----------------------------------------------------
+USER 10001:10001
+WORKDIR /usr/local/apache2/htdocs
+ENTRYPOINT ["/usr/sbin/httpd", "-D", "FOREGROUND"]

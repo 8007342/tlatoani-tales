@@ -1,0 +1,145 @@
+# Tlatoāni Tales — UNTRUSTED trainer image.
+#
+# ai-toolkit (ostris) + torch + CUDA runtime. Trains one character LoRA
+# per invocation, fully offline, fully sandboxed. The trusted `tt-lora`
+# wrapper renders an ai-toolkit config from the character's lora-manifest
+# hyperparams block and drops it into the ro bind mount; this container
+# reads `$TT_LORA_CONFIG` and hands it to ai-toolkit.
+#
+# Weights and reference sheets arrive through bind mounts. Output lands
+# in /workspace/output/ as <name>-v<N>.safetensors alongside a manifest
+# that `tt-lora` seals with a SHA-256 in the trusted zone after exit —
+# the untrusted side cannot lie about what it produced because the hash
+# is computed post-facto across the boundary.
+#
+# @trace spec:isolation, spec:character-loras, spec:orchestrator
+# @Lesson S1-1000  (observability-reliant stack — ai-toolkit stdout is the
+#                   only channel back; tt-lora parses it into LoraEvent
+#                   variants on the trusted event bus)
+# @Lesson S1-1500  (proof-by-self-reference — trained weights are hashed
+#                   across the boundary, so the cache key mentions them by
+#                   content and cannot be forged from inside the container)
+
+# TODO(pin): pin Fedora release; :latest drifts.
+FROM registry.fedoraproject.org/fedora-minimal:latest
+
+LABEL role="trainer"
+LABEL project="tlatoani-tales"
+LABEL description="UNTRUSTED ai-toolkit + torch + CUDA runtime for FLUX LoRA training"
+LABEL zone="untrusted"
+
+# --- Environment --------------------------------------------------------------
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    AI_TOOLKIT_HOME=/opt/ai-toolkit \
+    WORKSPACE=/workspace \
+    HF_HOME=/workspace/.hf-cache \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1 \
+    TT_LORA_CONFIG=/workspace/config/lora-config.yaml
+
+# --- System deps --------------------------------------------------------------
+# Same microdnf-minus-build-tooling-at-the-end pattern as the inference
+# image. ai-toolkit pins PyTorch wheels that expect glibc, so we stay on
+# fedora-minimal (not Alpine) per isolation/spec.md.
+RUN microdnf install -y --nodocs --setopt=install_weak_deps=0 \
+        python3.12 \
+        python3.12-devel \
+        python3-pip \
+        git \
+        gcc \
+        gcc-c++ \
+        make \
+        glibc-devel \
+        libstdc++ \
+        ca-certificates \
+        curl \
+        shadow-utils \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum /var/cache/dnf
+
+# --- Non-root user ------------------------------------------------------------
+RUN groupadd --system --gid 10001 tlatoani \
+    && useradd  --system --uid 10001 --gid 10001 \
+                --home-dir /workspace --shell /sbin/nologin tlatoani
+
+# --- ai-toolkit ---------------------------------------------------------------
+# ai-toolkit is not on PyPI at a supported tag — upstream ships via git.
+# We clone at build time and pip install in editable mode so its CLI
+# (`run.py <config>`) is importable. Runtime is offline (`--network=none`),
+# so every pip dep must already be installed here.
+#
+# TODO(pin): pin an ai-toolkit commit SHA. `--depth 1` takes HEAD which drifts.
+RUN git clone --depth 1 https://github.com/ostris/ai-toolkit.git ${AI_TOOLKIT_HOME}
+
+# venv + PyTorch (CUDA 12.4 wheels — matches the inference image; a drift
+# between the two would make cross-image reasoning about CUDA compat harder).
+RUN set -eux; \
+    python3.12 -m venv ${AI_TOOLKIT_HOME}/.venv; \
+    . ${AI_TOOLKIT_HOME}/.venv/bin/activate; \
+    pip install --upgrade pip wheel setuptools; \
+    pip install torch torchvision \
+        --index-url https://download.pytorch.org/whl/cu124; \
+    # ai-toolkit's requirements.txt covers transformers, diffusers, peft,
+    # safetensors, bitsandbytes, accelerate, etc. Whatever upstream pins.
+    pip install -r ${AI_TOOLKIT_HOME}/requirements.txt; \
+    # Editable install so `python -m` paths and entry points resolve.
+    pip install -e ${AI_TOOLKIT_HOME}; \
+    deactivate
+
+# --- Workspace skeleton -------------------------------------------------------
+# These are the paths `tt-lora` binds at runtime:
+#   /workspace/references/  — ro, per-character reference corpus
+#   /workspace/base/        — ro, flux1-schnell-fp8.safetensors (single file)
+#   /workspace/config/      — ro, rendered ai-toolkit config
+#   /workspace/output/      — rw, receives <name>-v<N>.safetensors
+# Build-time mkdir gives them valid inode targets; runtime bind mounts replace them.
+RUN mkdir -p /workspace/references \
+             /workspace/base \
+             /workspace/config \
+             /workspace/output \
+             /workspace/.hf-cache \
+    && chown -R 10001:10001 /workspace /opt/ai-toolkit
+
+# --- Entrypoint ---------------------------------------------------------------
+# Thin shell launcher: reads TT_LORA_CONFIG from env, invokes ai-toolkit's
+# run.py against it. stdout is the only observation channel — tt-lora on the
+# trusted side parses the step-progress lines into typed LoraEvent variants.
+RUN mkdir -p /usr/local/bin && \
+    printf '%s\n' \
+        '#!/bin/sh' \
+        '# tlatoani-tales trainer entrypoint.' \
+        '# @trace spec:isolation, spec:character-loras' \
+        'set -eu' \
+        '' \
+        ': "${TT_LORA_CONFIG:=/workspace/config/lora-config.yaml}"' \
+        ': "${AI_TOOLKIT_HOME:=/opt/ai-toolkit}"' \
+        '' \
+        'if [ ! -f "$TT_LORA_CONFIG" ]; then' \
+        '  echo "trainer: TT_LORA_CONFIG does not exist: $TT_LORA_CONFIG" >&2' \
+        '  echo "trainer: mount a rendered ai-toolkit config at that path" >&2' \
+        '  exit 64' \
+        'fi' \
+        '' \
+        'cd "$AI_TOOLKIT_HOME"' \
+        'exec "$AI_TOOLKIT_HOME/.venv/bin/python" \' \
+        '  "$AI_TOOLKIT_HOME/run.py" "$TT_LORA_CONFIG"' \
+        > /usr/local/bin/trainer-entrypoint.sh && \
+    chmod 0555 /usr/local/bin/trainer-entrypoint.sh
+
+# --- Strip build toolchain ----------------------------------------------------
+RUN microdnf remove -y \
+        gcc \
+        gcc-c++ \
+        make \
+        glibc-devel \
+        python3.12-devel \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum /var/cache/dnf /tmp/* /root/.cache
+
+# --- Final runtime posture ----------------------------------------------------
+USER 10001:10001
+WORKDIR /workspace
+ENTRYPOINT ["/usr/local/bin/trainer-entrypoint.sh"]
