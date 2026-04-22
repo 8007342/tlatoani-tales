@@ -30,6 +30,8 @@ Every committed file in the repo MUST match exactly one rule below. Unmatched fi
 | R14 | `**/*.lock`, `Cargo.lock` | GPL-3.0-or-later | Reproducibility artefacts for the Rust workspace |
 | R15 | `**/.gitkeep` | CC0 | Git directory-marker convention |
 | R16 | `crates/**/src/**/*.html` | GPL-3.0-or-later | Embedded HTML templates included via `include_str!` into Rust binaries |
+| R17 | `assets/fonts/**/*.ttf`, `**.otf`, `**.woff`, `**.woff2` | SIL OFL 1.1 (see `LICENSES/OFL-1.1.txt`) | Font binaries — **not committed** (`.gitignore` excludes) but referenced from tt-compose. License text travels with the repo. |
+| R18 | `LICENSES/**` | *(verbatim upstream — see file)* | Third-party license texts distributed alongside the repo. R09 still covers root-level `LICENSE` + `LICENSE-ART`; `LICENSES/` is the REUSE-style bucket for vendored licenses. |
 
 ## How the CRDT property plays out
 

@@ -354,6 +354,23 @@ fn licensing_rule_match(rel_path: &Path) -> Option<&'static str> {
         return Some("R16");
     }
 
+    // R17 — font binaries under assets/fonts/. Gitignored; rule exists
+    // so that if a font file IS accidentally committed the licensing
+    // graph still resolves it to the SIL OFL 1.1 vendored license.
+    if s.starts_with("assets/fonts/")
+        && (s.ends_with(".ttf")
+            || s.ends_with(".otf")
+            || s.ends_with(".woff")
+            || s.ends_with(".woff2"))
+    {
+        return Some("R17");
+    }
+
+    // R18 — LICENSES/** — the REUSE-style bucket for vendored license texts.
+    if s.starts_with("LICENSES/") {
+        return Some("R18");
+    }
+
     // Extension-driven rules.
     if s.ends_with(".sh") {
         return Some("R02");

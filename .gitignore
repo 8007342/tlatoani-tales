@@ -1,6 +1,15 @@
 # Local image-gen runtime — installed per-machine, never committed
 tools/
 
+# Font binaries — referenced in code, present locally, NOT committed.
+# OFL-1.1.txt license text IS committed at LICENSES/ per R17 so that any
+# container image baked from this repo carries the license acknowledgement
+# alongside the font binary when it's copied in at build time.
+assets/fonts/*.ttf
+assets/fonts/*.otf
+assets/fonts/*.woff
+assets/fonts/*.woff2
+
 # Ephemeral outputs — regenerated from specs + cache every run
 output/
 cache/
