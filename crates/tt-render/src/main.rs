@@ -101,7 +101,7 @@ async fn run() -> ExitCode {
     let cli = Cli::parse();
 
     // Telemetry first — every downstream `tracing::*` call needs it.
-    let _guard = match tt_telemetry::init() {
+    let _guard = match tt_telemetry::init_default() {
         Ok(g) => g,
         Err(_) => return ExitCode::InfraFailure,
     };
@@ -119,7 +119,7 @@ async fn run() -> ExitCode {
             tracing::info!(spec = "orchestrator", "tt-render: mutate");
             ExitCode::Success
         }
-        Command::Verify => match tt_lint::verify_all(std::path::Path::new(".")).await {
+        Command::Verify => match tt_lint::verify_all_in(std::path::Path::new(".")).await {
             Ok(report) if report.is_clean() => ExitCode::Success,
             Ok(_) => ExitCode::SpecInvariantViolation,
             Err(_) => {

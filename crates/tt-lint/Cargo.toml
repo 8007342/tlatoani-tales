@@ -13,5 +13,9 @@ tt-specs = { path = "../tt-specs" }
 tokio = { workspace = true }
 walkdir = { workspace = true }
 glob = { workspace = true }
+regex = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
