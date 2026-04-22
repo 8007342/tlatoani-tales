@@ -5,7 +5,7 @@
 # @trace spec:image-gen-runtime
 set -euo pipefail
 
-PROJECT_DIR="/var/home/machiyotl/src/tlatoani-tales"
+PROJECT_DIR="/var/home/machiyotl/src/tlatoāni-tales"
 COMFY_DIR="${PROJECT_DIR}/tools/ComfyUI"
 MODELS_DIR="${COMFY_DIR}/models"
 VENV="${COMFY_DIR}/.venv"

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`tt-render` is the CLI that drives Tlatoāni Tales end-to-end: spec files → content-addressed panel cache → ComfyUI render → VLM drift critique → reroll → composite + plates → `output/Tlatoani_Tales_NNN.png`.
+`tt-render` is the CLI that drives Tlatoāni Tales end-to-end: spec files → content-addressed panel cache → ComfyUI render → VLM drift critique → reroll → composite + plates → `output/Tlatoāni_Tales_NNN.png`.
 
 This is where **convergence literally closes**. Every other spec describes a contract; this spec describes the loop that *enforces* those contracts against pixels. A spec edit is a Lamport tick (ME01); the orchestrator is the G-Set union operator that re-derives the world from the new spec state (ME05). When TT #12 ships and a reader asks "where does the loop close?" — the answer is this file and the code it governs.
 
@@ -13,7 +13,7 @@ This is where **convergence literally closes**. Every other spec describes a con
 
 - The author **never** manually edits a rendered PNG. Every pixel is reproducible from specs + cache.
 - `output/` is **ephemeral**. Delete the directory, rerun `tt-render`, pixel-identical result (modulo spec mutations since the last run).
-- Every `output/Tlatoani_Tales_NN.png` has a sibling `output/Tlatoani_Tales_NN.json` metadata file. No metadata, no ship.
+- Every `output/Tlatoāni_Tales_NN.png` has a sibling `output/Tlatoāni_Tales_NN.json` metadata file. No metadata, no ship.
 - Every panel in `cache/panels/` has a sibling QA report `cache/panels/<hash>.json`. No QA, no cache promotion.
 - Every rendered strip declares exactly one `trace_spec` and one primary `lesson` (per trace-plate + lessons specs). `tt-render verify` rejects strips missing either.
 - Cache keys are **content-addressed**; any upstream input change invalidates the downstream hash monotonically. Mutation never requires manual cache busting.
@@ -150,9 +150,9 @@ Pseudocode — single strip, single panel; the default command fans this out per
           addendum = qa.build_addendum(drift_report.failed_checks)
           resubmit workflow with addendum; iteration++
 6. compose strip            → PIL stitch 3 panels, paste plates, render fonts
-7. write output/Tlatoani_Tales_NN.png
+7. write output/Tlatoāni_Tales_NN.png
 8. emit composite.done and metadata
-9. write output/Tlatoani_Tales_NN.json (METADATA schema + lesson_search_url)
+9. write output/Tlatoāni_Tales_NN.json (METADATA schema + lesson_search_url)
 10. append output/telemetry/<strip>.jsonl
 ```
 

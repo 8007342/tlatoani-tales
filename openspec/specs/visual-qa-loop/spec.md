@@ -38,8 +38,8 @@ For each rendered panel, emit a JSON drift report:
   "iteration": 1,
   "model": "moondream:2b",
   "checks": [
-    { "id": "tlatoani.single-tail",     "spec": "character-canon", "pass": true,  "confidence": 0.92 },
-    { "id": "tlatoani.crown-present",   "spec": "character-canon", "pass": true,  "confidence": 0.87 },
+    { "id": "tlatoāni.single-tail",     "spec": "character-canon", "pass": true,  "confidence": 0.92 },
+    { "id": "tlatoāni.crown-present",   "spec": "character-canon", "pass": true,  "confidence": 0.87 },
     { "id": "covi.ambiguous-white",     "spec": "character-canon", "pass": true,  "confidence": 0.95 },
     { "id": "covi.good-mood",           "spec": "character-canon", "pass": false, "confidence": 0.71, "note": "expression reads dejected" },
     { "id": "palette.paper-bg",         "spec": "style-bible",     "pass": true,  "confidence": 0.88 },

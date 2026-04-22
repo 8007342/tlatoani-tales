@@ -31,7 +31,7 @@ Per character, living under `characters/<name>/references/`:
 | Background | plain / paper / soft blur | Never sheet-crowded backgrounds; they contaminate the LoRA |
 | Lighting | consistent with style bible | Warm, soft, no hard rim lighting |
 
-File naming: `<name>-<pose>-<expression>-<NN>.png` (e.g. `tlatoani-standing-calm-03.png`). Numeric suffix so the trainer doesn't collapse near-duplicates by name.
+File naming: `<name>-<pose>-<expression>-<NN>.png` (e.g. `tlatoāni-standing-calm-03.png`). Numeric suffix so the trainer doesn't collapse near-duplicates by name.
 
 ### Reference gate
 
@@ -98,7 +98,7 @@ Minimal, structured, trigger token first. No over-description — the LoRA shoul
 
 `tools/loras/<name>-v<N>.safetensors` — gitignored. Examples:
 
-- `tools/loras/tlatoani-v1.safetensors`
+- `tools/loras/tlatoāni-v1.safetensors`
 - `tools/loras/covi-v1.safetensors`
 
 ### Manifest (committed)
@@ -107,7 +107,7 @@ Minimal, structured, trigger token first. No over-description — the LoRA shoul
 
 ```jsonc
 {
-  "character":         "tlatoani",
+  "character":         "tlatoāni",
   "version":           1,
   "trigger_token":     "TlhAxolotlSage",
   "base_model": {
@@ -115,7 +115,7 @@ Minimal, structured, trigger token first. No over-description — the LoRA shoul
     "sha256":          "…"
   },
   "dataset": {
-    "reference_dir":   "characters/tlatoani/references/",
+    "reference_dir":   "characters/tlatoāni/references/",
     "image_count":     32,
     "dataset_hash":    "sha256:…"
   },
@@ -131,7 +131,7 @@ Minimal, structured, trigger token first. No over-description — the LoRA shoul
     "caption_dropout": 0.05
   },
   "output": {
-    "path":            "tools/loras/tlatoani-v1.safetensors",
+    "path":            "tools/loras/tlatoāni-v1.safetensors",
     "sha256":          "…",
     "size_bytes":      …
   },
@@ -155,7 +155,7 @@ The panel cache (planned: `panel-cache/spec.md`; see ME05) keys each rendered pa
 panel_hash = sha256(
   style_bible_rev,
   character_canon_rev,
-  lora_hash(tlatoani-v<N>),       // <-- from lora-manifest.json
+  lora_hash(tlatoāni-v<N>),       // <-- from lora-manifest.json
   lora_hash(covi-v<N>),           //     same
   base_model_hash,
   prompt,
@@ -201,7 +201,7 @@ Sanity prompts are defined per character in the manifest under `sanity.prompts`.
 
 - `v1` is the first published LoRA that cleared the sanity gate.
 - `v2` is minted when: references change meaningfully, hyperparams change, or canon changes in a way that requires re-training.
-- **Strip proposals MAY pin a specific LoRA version** in their frontmatter (`lora_versions: { tlatoani: 1, covi: 1 }`). Omitted = latest. Pinning freezes reproducibility for archival strips.
+- **Strip proposals MAY pin a specific LoRA version** in their frontmatter (`lora_versions: { tlatoāni: 1, covi: 1 }`). Omitted = latest. Pinning freezes reproducibility for archival strips.
 - Promoting `v2` does not retroactively invalidate strips that pinned `v1`. Pinning is a CRDT: a strip's pinned version is a stable cell, and the cache respects it.
 
 ## Out of scope

@@ -3,12 +3,12 @@
 # Idempotent — safe to re-run.
 #
 # Usage (from host):
-#   toolbox run -c tlatoani-tales bash /var/home/machiyotl/src/tlatoani-tales/scripts/bootstrap-comfyui.sh
+#   toolbox run -c tlatoani-tales bash /var/home/machiyotl/src/tlatoāni-tales/scripts/bootstrap-comfyui.sh
 #
 # @trace spec:image-gen-runtime
 set -euo pipefail
 
-PROJECT_DIR="/var/home/machiyotl/src/tlatoani-tales"
+PROJECT_DIR="/var/home/machiyotl/src/tlatoāni-tales"
 TOOLS_DIR="${PROJECT_DIR}/tools"
 COMFY_DIR="${TOOLS_DIR}/ComfyUI"
 VENV_DIR="${COMFY_DIR}/.venv"

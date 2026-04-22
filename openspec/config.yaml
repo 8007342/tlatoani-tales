@@ -12,7 +12,7 @@ context: |
     2. openspec/specs/      — canon: style, characters, symbols, curriculum, arc
     3. strips/NN-slug/      — per-strip scripts, panel prompts, cached hashes
     4. cache/               — content-addressed rendered panels (CRDT G-Set)
-    5. output/              — composited Tlatoani_Tales_NNN.png (rebuilt each run)
+    5. output/              — composited Tlatoāni_Tales_NNN.png (rebuilt each run)
 
   Image generation runtime lives in tools/ (gitignored, per-machine):
     - ComfyUI in tools/ComfyUI
