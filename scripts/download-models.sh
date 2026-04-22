@@ -15,8 +15,8 @@ log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
 # shellcheck disable=SC1091
 source "${VENV}/bin/activate"
 
-log "installing huggingface-hub CLI"
-pip install --quiet --upgrade "huggingface-hub[cli]"
+log "ensuring huggingface_hub is current (ships the 'hf' CLI)"
+pip install --quiet --upgrade huggingface_hub
 
 mkdir -p \
   "${MODELS_DIR}/unet" \
@@ -31,22 +31,22 @@ mkdir -p \
 # Using fp8 T5 variant to stay well inside 24GB VRAM.
 # -----------------------------------------------------------------------------
 log "downloading FLUX.1-schnell transformer (fp8, ~12GB)"
-huggingface-cli download Comfy-Org/flux1-schnell \
+hf download Comfy-Org/flux1-schnell \
   flux1-schnell-fp8.safetensors \
   --local-dir "${MODELS_DIR}/checkpoints"
 
 log "downloading FLUX VAE (~335MB)"
-huggingface-cli download black-forest-labs/FLUX.1-schnell \
+hf download black-forest-labs/FLUX.1-schnell \
   ae.safetensors \
   --local-dir "${MODELS_DIR}/vae"
 
 log "downloading CLIP-L (~250MB)"
-huggingface-cli download comfyanonymous/flux_text_encoders \
+hf download comfyanonymous/flux_text_encoders \
   clip_l.safetensors \
   --local-dir "${MODELS_DIR}/clip"
 
 log "downloading T5-XXL fp8 (~4.9GB)"
-huggingface-cli download comfyanonymous/flux_text_encoders \
+hf download comfyanonymous/flux_text_encoders \
   t5xxl_fp8_e4m3fn.safetensors \
   --local-dir "${MODELS_DIR}/clip"
 
@@ -55,7 +55,7 @@ huggingface-cli download comfyanonymous/flux_text_encoders \
 # Used as a second pass for panels with on-panel text.
 # -----------------------------------------------------------------------------
 log "downloading Qwen-Image (Apache 2.0, ~20GB)"
-huggingface-cli download Qwen/Qwen-Image \
+hf download Qwen/Qwen-Image \
   --local-dir "${MODELS_DIR}/checkpoints/Qwen-Image" \
   --include "*.safetensors" "*.json" "*.txt"
 
