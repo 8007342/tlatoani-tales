@@ -43,7 +43,11 @@ For each rendered panel, emit a JSON drift report:
     { "id": "covi.ambiguous-white",     "spec": "character-canon", "pass": true,  "confidence": 0.95 },
     { "id": "covi.good-mood",           "spec": "character-canon", "pass": false, "confidence": 0.71, "note": "expression reads dejected" },
     { "id": "palette.paper-bg",         "spec": "style-bible",     "pass": true,  "confidence": 0.88 },
-    { "id": "plate.bottom-right",       "spec": "style-bible",     "pass": true,  "confidence": 0.93 }
+    { "id": "plate.episode.position",   "spec": "style-bible",     "pass": true,  "confidence": 0.93 },
+    { "id": "plate.trace-present",      "spec": "trace-plate",     "pass": true,  "confidence": 0.91 },
+    { "id": "plate.trace-legible",      "spec": "trace-plate",     "pass": true,  "confidence": 0.89 },
+    { "id": "plate.trace-content",      "spec": "trace-plate",     "pass": true,  "confidence": 0.94, "note": "matches proposal.md trace_spec" },
+    { "id": "plate.symmetry",           "spec": "trace-plate",     "pass": true,  "confidence": 0.90 }
   ],
   "drift_score": 0.14,
   "verdict": "reroll"

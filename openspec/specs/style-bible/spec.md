@@ -10,7 +10,9 @@ Canonical visual and tonal rules for every Tlatoāni Tales strip. Any panel viol
 - **Aspect**: composite strip ~2:1 (wider than tall). Each panel ~square, separated by thin gutters.
 - **Background**: warm paper tone (#F4E9D3 ± 5%). Lightly aged, subtle grain.
 - **Margins**: consistent spacing on all four sides. No extra empty bands above or below panels.
-- **Episode plate**: bottom-right, overlapping all of panel 3 and ~12% of panel 2. Text: `Tlatoāni Tales #NN`. Dark ink on cream scroll/banner motif.
+- **Plates (matched pair)**: dark ink on cream scroll / banner motif. Symmetric. Same typeface family and weight.
+  - **Episode plate** (bottom-right): overlaps all of panel 3 and ~12% of panel 2. Text: `Tlatoāni Tales #NN`.
+  - **Trace plate** (bottom-left): overlaps all of panel 1 and ~12% of panel 2. Text: `[@trace spec:<name>]`. Selection rules and metadata emission in `trace-plate/spec.md`. Every strip MUST carry one — no trace, no ship.
 - **Panel parse time**: < 1 second per panel. Minimal clutter.
 
 ## Visual style

@@ -25,6 +25,9 @@ When a reader objects *"but that only applies to code, not my real work"*, we po
 | ME07 | **Lessons ledger stale-marking** | C06, C08 | `lessons-ledger/spec.md` | Author notes `Known-wobble` on a reader-assumption. Every strip that depends on that assumption is marked stale. Observability of the *reader*, not the code. |
 | ME08 | **Visual QA feedback loop** | C08, C09, C10, C11, C12 | `visual-qa-loop/spec.md` | VLM critiques panel → drift score → reroll with derived addendum. Telemetry is the output of the previous iteration *and* the input of the next. The loop closes on itself. |
 | ME09 | **LoRA-hash in panel cache key** | C05, C06 | `character-canon/spec.md` | Character identity is part of the content hash. Retraining the LoRA = new hash = automatic invalidation of every affected panel. Spec-to-code causality, measurable. |
+| ME10 | *(reserved — pending author decision)* | — | — | Candidate: *"exit 0 is not success"* — the `huggingface-cli` deprecation returning exit-0-with-hint is a tiny live C08 demo. IDs are never reused, so reserving keeps the sequence stable until resolved. |
+| ME11 | **Trace plate as in-frame observability** | C08, C09, C12 | `trace-plate/spec.md` | Every strip carries `[@trace spec:<name>]` at bottom-left. The strip itself is *observable* — a reader can click from the frame to the governing spec to the whole trace network. Observability surfaces from the tooling layer into the artefact. Teach by example, literally in-panel. |
+| ME12 | **First propagation event: adding the trace plate** | C05, C06, C07 | `trace-plate/spec.md` | Adding the plate to `style-bible/spec.md` retroactively marked every prior strip layout stale. Strip #01's ChatGPT demo PNG no longer matches canon. The repo is presently in a known-not-yet-convergent state; the commit history will show the convergence. Live C07 + C12. |
 
 ## Adding a new example
 
