@@ -1,0 +1,15 @@
+{
+  "character": "covi",
+  "version": 1,
+  "base_model_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "dataset_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "hyperparams": {
+    "rank": 16,
+    "alpha": 16,
+    "steps": 2500,
+    "learning_rate": 0.0001,
+    "batch_size": 1,
+    "optimizer": "AdamW8bit"
+  },
+  "trigger_token": "CoviFigure"
+}

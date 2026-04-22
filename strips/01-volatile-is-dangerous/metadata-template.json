@@ -1,0 +1,49 @@
+{
+  "_comment_schema": "This is the template shape of output/Tlatoāni_Tales_01.json once tt-compose + tt-metadata run end-to-end. Exact field set per trace-plate/spec.md METADATA schema. Coordinates below are placeholder values aligned to tt-compose's 1800x900 composited-strip geometry (three 600x900 panels) — the orchestrator overwrites them with real measurements at render time. Comments with underscore-prefixed keys are for human readers and should NOT appear in the emitted JSON.",
+
+  "strip":              "TT 01/15",
+  "title":              "Volatile is dangerous",
+  "title_display":      "[Volatile is dangerous]",
+  "title_render_model": "Qwen-Image",
+  "title_float":        "left",
+  "title_linkable":     false,
+
+  "lesson":             "S1-100",
+  "lesson_display":     "Volatile is dangerous",
+  "lesson_search_url":  "https://github.com/8007342/tlatoani-tales/search?q=%40Lesson+S1-100&type=code",
+  "lesson_spec_url":    "https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/lessons/spec.md",
+  "calmecac_lesson_url":"https://calmecac.tlatoani-tales.com/lesson/S1-100",
+
+  "trace_spec":         "concept-curriculum",
+  "trace_search_url":   "https://github.com/8007342/tlatoani-tales/search?q=%40trace+spec%3Aconcept-curriculum&type=code",
+  "trace_spec_url":     "https://github.com/8007342/tlatoani-tales/blob/main/openspec/specs/concept-curriculum/spec.md",
+  "calmecac_spec_url":  "https://calmecac.tlatoani-tales.com/spec/concept-curriculum",
+
+  "plate_regions": {
+    "title":         { "x": 0,    "y": 0,   "w": 620,  "h": 140 },
+    "trace_lesson": {
+      "x": 0, "y": 720, "w": 780, "h": 180,
+      "lesson_line": { "x": 12, "y": 732, "w": 760, "h": 78 },
+      "trace_line":  { "x": 12, "y": 818, "w": 760, "h": 72 }
+    },
+    "episode":       { "x": 1180, "y": 720, "w": 620,  "h": 180 }
+  },
+
+  "concepts_taught":    ["C01"],
+  "concepts_assumed":   [],
+  "reinforces_lessons": [],
+
+  "alt_text":           "A three-panel warm-paper newspaper comic titled Volatile is dangerous. Panel 1: a small white ambiguous figure named Covi crouches over a cardboard box labelled CONTEXT (105%), pressing colourful sticky-notes labelled Prompt v17, Rules, Example, Memory into the box with concentrated effort; behind them stands Tlatoāni, a small axolotl sage with a single tail, a gold crown with subtle Aztec geometry, and a blue-green tunic, holding a closed umbrella tucked under one arm and watching calmly. Panel 2: the box bursts; sticky-notes and small BOING marks fly outward in every direction; Covi throws their arms up and shouts MY PRECIOUS CONTEXT; Tlatoāni has opened the umbrella fully and holds it over both of them, deflecting the debris with the same serene expression. Panel 3: quiet aftermath; sticky-notes lie strewn across the ground; Tlatoāni closes the umbrella; Covi blushes sheepishly; Tlatoāni says softly, that was committed, right? The strip carries a top-left title plate reading [Volatile is dangerous], a bottom-left plate reading [@Lesson S1-100] on line 1 and [@trace spec:concept-curriculum] on line 2, and a bottom-right plate reading Tlatoāni Tales 01/15.",
+
+  "caption":            "Tlatoāni Tales 01/15 — [Volatile is dangerous] — @Lesson S1-100 / @trace spec:concept-curriculum",
+
+  "_notes_for_future_strips": {
+    "strip_field":         "Always 'TT NN/15' once TOTAL=15 is stable. Bare '#NN' remains legal until convergence.",
+    "lesson_field":         "Just the ID (e.g. 'S1-100'). The display name goes in lesson_display.",
+    "trace_spec_field":     "Just the spec slug (e.g. 'concept-curriculum'). URLs templated from it.",
+    "plate_regions":        "Overwritten by tt-compose at render time; values here are authoring placeholders. Trace_lesson splits into two independent click regions per trace-plate/spec.md.",
+    "concepts_taught":      "List of internal concept IDs (Cxx). Curriculum DAG enforcement reads these.",
+    "reinforces_lessons":   "Empty for TT 01/15 (root beat). Later strips cite earlier lesson IDs here.",
+    "caption":              "Canonical caption for publishing. Always the same shape: 'Tlatoāni Tales NN/15 — [Title] — @Lesson Sn-NNN / @trace spec:<name>'."
+  }
+}
