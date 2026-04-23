@@ -64,24 +64,36 @@ readonly OLLAMA_MODELS_DIR="${PROJECT_DIR}/tools/ollama-models"
 COMFY_PORT="${DEFAULT_COMFY_PORT}"
 OLLAMA_PORT="${DEFAULT_OLLAMA_PORT}"
 MODE="start"
+# Default GPU passthrough is the modern CDI form. Override at the CLI
+# when CDI isn't configured on the host (or when running CPU-only).
+GPU_FLAGS=(--device "nvidia.com/gpu=all")
 
 usage() {
   cat <<'EOF'
 Tlatoāni Tales — local inference runtime launcher.
 
 Usage:
-  start-inference.sh [--comfy-port N] [--ollama-port N]
+  start-inference.sh [--comfy-port N] [--ollama-port N] [GPU OPTION]
   start-inference.sh --stop
   start-inference.sh --rebuild
   start-inference.sh --help
 
 The first form starts the inference container in the untrusted zone with
 ComfyUI on 127.0.0.1:8188 and ollama on 127.0.0.1:11434 (defaults).
-Idempotent: if already running, logs the URLs and exits 0.
+Idempotent: if already running with the same config, logs the URLs and
+exits 0; if running with a different config, refuses with a clear
+diff; if a stale container exists from a different image, recreates it.
 
 Options:
   --comfy-port N      Override the host-side ComfyUI port (default 8188).
   --ollama-port N     Override the host-side ollama port (default 11434).
+  --no-gpu            Run without GPU passthrough (CPU-only — very slow
+                      for FLUX, but useful for smoke-testing the
+                      pipeline on a host without nvidia / CDI).
+  --gpus-flag SPEC    Override the GPU passthrough form. Default is the
+                      CDI form `--device nvidia.com/gpu=all`. Pass for
+                      example `--gpus-flag '--gpus all'` to use the
+                      legacy nvidia-container-runtime path.
   --stop              Stop and remove the container; exit 0.
   --rebuild           Remove the local image, rebuild from
                       images/inference/Containerfile, then start fresh.
@@ -104,6 +116,15 @@ while [[ $# -gt 0 ]]; do
       ;;
     --ollama-port)
       OLLAMA_PORT="${2:?--ollama-port requires a value}"
+      shift 2
+      ;;
+    --no-gpu)
+      GPU_FLAGS=()
+      shift
+      ;;
+    --gpus-flag)
+      # shellcheck disable=SC2206  # word-splitting is the intent here
+      GPU_FLAGS=( ${2:?--gpus-flag requires a value} )
       shift 2
       ;;
     --stop)
@@ -194,27 +215,110 @@ fi
 mkdir -p "${OLLAMA_MODELS_DIR}"
 
 # ---------------------------------------------------------------------------
-# Already-running guard
+# Inspect helpers — used by the idempotency branches below
+# ---------------------------------------------------------------------------
+
+# Returns the container's image-id (digest) or empty string if no container.
+container_image_id() {
+  podman container inspect "${CONTAINER_NAME}" --format '{{.Image}}' 2>/dev/null
+}
+
+# Returns the current `${IMAGE_TAG}` image-id (digest) or empty string.
+target_image_id() {
+  podman image inspect "${IMAGE_TAG}" --format '{{.Id}}' 2>/dev/null
+}
+
+# Returns the host-side port currently bound for an in-container port (e.g.
+# `8188`). Empty string if the container doesn't exist or the port isn't
+# published. Returns the FIRST binding only — we always publish exactly one.
+published_host_port() {
+  local in_port="$1"
+  podman container inspect "${CONTAINER_NAME}" \
+    --format "{{ with index .NetworkSettings.Ports \"${in_port}/tcp\" }}{{ (index . 0).HostPort }}{{ end }}" \
+    2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Pre-flight: GPU passthrough sanity
+# ---------------------------------------------------------------------------
+# CDI passthrough (the default) requires `/etc/cdi/nvidia.yaml` to exist.
+# Without it the container record gets created but never starts, leaving
+# subsequent runs to loop on the same error. Bail early with the fix.
+
+if [[ ${#GPU_FLAGS[@]} -gt 0 ]] \
+   && [[ "${GPU_FLAGS[*]:-}" == *"nvidia.com/gpu"* ]]; then
+  if [[ ! -f /etc/cdi/nvidia.yaml && ! -f /etc/cdi/nvidia.json ]]; then
+    cat >&2 <<EOF
+ERROR: --device nvidia.com/gpu=all requires CDI configuration on the host,
+       but neither /etc/cdi/nvidia.yaml nor /etc/cdi/nvidia.json exists.
+
+Fix on Fedora Silverblue:
+  sudo rpm-ostree install nvidia-container-toolkit
+  sudo systemctl reboot                  # required after layering
+  sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+
+Or work around for a smoke test:
+  scripts/start-inference.sh --no-gpu                 # CPU-only (slow)
+  scripts/start-inference.sh --gpus-flag '--gpus all' # legacy nvidia-container-runtime
+EOF
+    exit 1
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Already-running branch — validate config, then exit 0 / refuse with diff.
 # ---------------------------------------------------------------------------
 
 if podman ps --filter "name=^${CONTAINER_NAME}$" --format '{{.Names}}' \
      | grep -qx "${CONTAINER_NAME}"; then
-  echo "already running:"
-  echo "  ComfyUI  http://localhost:${COMFY_PORT}"
-  echo "  ollama   http://localhost:${OLLAMA_PORT}"
-  exit 0
+  actual_comfy="$(published_host_port 8188)"
+  actual_ollama="$(published_host_port 11434)"
+  if [[ "${actual_comfy}"  == "${COMFY_PORT}"  ]] \
+  && [[ "${actual_ollama}" == "${OLLAMA_PORT}" ]]; then
+    echo "already running:"
+    echo "  ComfyUI  http://localhost:${COMFY_PORT}"
+    echo "  ollama   http://localhost:${OLLAMA_PORT}"
+    exit 0
+  fi
+  cat >&2 <<EOF
+${CONTAINER_NAME} is already running with a different port mapping:
+  running:    ComfyUI=${actual_comfy:-?}  ollama=${actual_ollama:-?}
+  requested:  ComfyUI=${COMFY_PORT}  ollama=${OLLAMA_PORT}
+Use --stop to remove it and re-run with the desired ports, or call
+without overriding ports to accept the running config.
+EOF
+  exit 1
 fi
 
 # ---------------------------------------------------------------------------
-# Stopped-but-exists branch
+# Stopped-but-exists branch — validate image, start; or fall through.
 # ---------------------------------------------------------------------------
+# Three failure modes we recover from automatically:
+#   1. Container exists from a previous failed `podman run` (e.g. CDI not
+#      configured at the time) — start would loop the same error. Remove
+#      and run fresh.
+#   2. Container's image differs from the current ${IMAGE_TAG} (rebuild
+#      happened outside the script). Remove and run fresh.
+#   3. start succeeds but the container exits immediately (we don't catch
+#      this here; the caller can `podman logs` to see why).
 
 if podman container exists "${CONTAINER_NAME}"; then
-  podman start "${CONTAINER_NAME}" >/dev/null
-  echo "started:"
-  echo "  ComfyUI  http://localhost:${COMFY_PORT}"
-  echo "  ollama   http://localhost:${OLLAMA_PORT}"
-  exit 0
+  current_image_id="$(container_image_id)"
+  expected_image_id="$(target_image_id)"
+
+  if [[ -n "${current_image_id}" ]] \
+  && [[ "${current_image_id}" == "${expected_image_id}" ]]; then
+    if podman start "${CONTAINER_NAME}" >/dev/null 2>&1; then
+      echo "started:"
+      echo "  ComfyUI  http://localhost:${COMFY_PORT}"
+      echo "  ollama   http://localhost:${OLLAMA_PORT}"
+      exit 0
+    fi
+    echo "podman start failed for the existing ${CONTAINER_NAME}; removing and starting fresh." >&2
+  else
+    echo "${CONTAINER_NAME} was created from a different image; removing and starting fresh." >&2
+  fi
+  podman rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 fi
 
 # ---------------------------------------------------------------------------
@@ -249,10 +353,15 @@ if ! podman run --detach \
   --tmpfs /opt/ComfyUI/.hf-cache \
   --volume "${MODELS_DIR}:/opt/ComfyUI/models:ro,Z" \
   --volume "${OLLAMA_MODELS_DIR}:/opt/ollama/models:rw,Z" \
-  --device nvidia.com/gpu=all \
+  "${GPU_FLAGS[@]}" \
   "${IMAGE_TAG}" \
   >/dev/null
 then
+  # podman run can leave a created-but-never-started container record
+  # behind on failure. Clean it up so the next invocation starts fresh
+  # rather than looping on the same error in the stopped-but-exists
+  # branch above.
+  podman rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
   echo "podman run failed — see 'podman logs ${CONTAINER_NAME}' if the container exists" >&2
   exit 2
 fi
