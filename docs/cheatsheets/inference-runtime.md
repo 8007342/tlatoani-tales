@@ -7,12 +7,23 @@ Operational reference for running ComfyUI + (optionally) ollama for the Tlatoān
 
 ## TL;DR
 
+Every `scripts/*.sh` declares a zone — see `openspec/specs/script-conventions/spec.md`. `start-inference.sh` is **`# zone: inside-toolbox`**, so enter the toolbox first:
+
 ```
-scripts/start-inference.sh                   # start ComfyUI inside the toolbox (idempotent)
+toolbox enter tlatoani-tales
+cd ~/src/tlatoāni-tales
+scripts/start-inference.sh                   # start ComfyUI (idempotent)
 scripts/start-inference.sh --status          # is it running?
 scripts/start-inference.sh --stop            # stop cleanly
-curl -s http://localhost:8188/system_stats   # ComfyUI healthcheck
+curl -s http://localhost:8188/system_stats   # ComfyUI healthcheck (works from host too — toolbox shares the network)
 ```
+
+Run from the host shell and the guard exits 1 with:
+
+> `ERROR: this script must run INSIDE the tlatoani-tales toolbox.`
+> `       toolbox enter tlatoani-tales`
+
+The viewer launcher (`scripts/tlatoāni_tales.sh`) is the mirror opposite — `# zone: host`. Run it from the host shell, never from inside the toolbox; podman isn't installed there.
 
 ## What the launcher does
 

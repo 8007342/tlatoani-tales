@@ -2,11 +2,30 @@
 # Bootstraps ComfyUI inside the tlatoani-tales toolbox.
 # Idempotent — safe to re-run.
 #
-# Usage (from host):
-#   toolbox run -c tlatoani-tales bash /var/home/machiyotl/src/tlatoāni-tales/scripts/bootstrap-comfyui.sh
+# Usage:
+#   toolbox enter tlatoani-tales
+#   cd ~/src/tlatoāni-tales
+#   scripts/bootstrap-comfyui.sh
 #
-# @trace spec:image-gen-runtime
+# @trace spec:script-conventions, spec:orchestrator, spec:character-loras
+# @Lesson S1-1500
+
 set -euo pipefail
+
+# zone: inside-toolbox
+# See openspec/specs/script-conventions/spec.md
+if [[ ! -f /run/.toolboxenv ]]; then
+  echo "ERROR: this script must run INSIDE the tlatoani-tales toolbox." >&2
+  echo "       toolbox enter tlatoani-tales" >&2
+  echo "       cd ~/src/tlatoāni-tales" >&2
+  echo "       $(basename "$0") ..." >&2
+  exit 1
+fi
+_toolbox="$(awk -F= '/^name=/{gsub(/"/,"",$2); print $2}' /run/.containerenv 2>/dev/null || true)"
+if [[ "${_toolbox}" != "tlatoani-tales" ]]; then
+  echo "ERROR: inside toolbox '${_toolbox}', need 'tlatoani-tales'." >&2
+  exit 1
+fi
 
 PROJECT_DIR="/var/home/machiyotl/src/tlatoāni-tales"
 TOOLS_DIR="${PROJECT_DIR}/tools"

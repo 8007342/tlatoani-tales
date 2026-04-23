@@ -26,6 +26,18 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# zone: host
+# See openspec/specs/script-conventions/spec.md
+# The viewer launcher runs against the host's rootless podman storage
+# (podman build + podman run). Podman is NOT installed inside the
+# tlatoani-tales toolbox, and nested rootless podman is fragile —
+# this script belongs on the host shell.
+if [[ -f /run/.toolboxenv ]]; then
+  echo "ERROR: this script must run on the HOST shell (not inside any toolbox)." >&2
+  echo "       exit the toolbox (Ctrl-D or 'exit') and retry." >&2
+  exit 1
+fi
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------

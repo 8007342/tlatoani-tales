@@ -1,52 +1,58 @@
 #!/usr/bin/env bash
 # Tlatoāni Tales — local inference runtime launcher (Season 1 MVP).
 #
-# Runs ComfyUI inside the existing `tlatoani-tales` toolbox. The toolbox
-# already provides the untrusted-zone runtime at the level we need for
-# Season 1: rootless podman container, automatic nvidia-smi passthrough,
-# filesystem shared with the host's $HOME so model weights are reachable
-# without bespoke bind mounts. ComfyUI is installed at `tools/ComfyUI/`
-# by `scripts/bootstrap-comfyui.sh`; FLUX-schnell and Qwen-Image weights
+# Runs ComfyUI from inside the `tlatoani-tales` toolbox. The toolbox
+# provides the untrusted-zone runtime for Season 1: rootless podman
+# container, automatic nvidia-smi passthrough, filesystem shared with
+# the host's $HOME. ComfyUI is installed at `tools/ComfyUI/` by
+# `scripts/bootstrap-comfyui.sh`; FLUX-schnell and Qwen-Image weights
 # live under `tools/ComfyUI/models/`.
 #
-# Why toolbox instead of the hardened podman container
-# ---------------------------------------------------------------------------
 # The hardened-container path (images/inference/Containerfile, full
-# DEFAULT_FLAGS, CDI GPU passthrough) was authored as Season 2 teaching
-# material — the literal demonstration of `podman-run-drop-privileges`.
-# It requires layering `nvidia-container-toolkit` and a `nvidia-ctk cdi
-# generate` step, which is Silverblue-reboot-level state change. Season 1
-# MVP ships without that prerequisite: `nvidia-smi` is already on the
-# host, the toolbox already sees the GPU, and the author's feedback was
-# explicit — *"we don't always know better, use what already works"*.
+# DEFAULT_FLAGS, CDI GPU passthrough) remains authored as Season 2
+# teach-by-example material — see openspec/specs/isolation/spec.md
+# §Phased isolation.
 #
-# The trust boundary is still preserved conceptually: the trusted Rust
-# workspace runs in this host shell (or in the same toolbox's cargo
-# workflow) and calls into the ComfyUI HTTP API. The untrusted Python
-# runtime lives inside the toolbox and doesn't leak beyond it. The
-# migration to full hardening is a Season 2 lesson, not an MVP blocker.
-# See openspec/specs/isolation/spec.md §Phased isolation.
+# Usage:
+#   toolbox enter tlatoani-tales
+#   cd ~/src/tlatoāni-tales
+#   scripts/start-inference.sh                 # start
+#   scripts/start-inference.sh --status
+#   scripts/start-inference.sh --stop
 #
-# Idempotent, PID-file-tracked, single-instance. Exit codes:
+# Idempotent, PID-file tracked. Exit codes:
 #   0 — ComfyUI running (or cleanly stopped via --stop, or --status query)
-#   1 — Precondition failed (wrong OS, missing toolbox, missing install)
+#   1 — Precondition failed (wrong zone, missing install, port busy)
 #   2 — ComfyUI failed to start
 #
-# @trace spec:isolation, spec:orchestrator, spec:visual-qa-loop
+# @trace spec:script-conventions, spec:isolation, spec:orchestrator, spec:visual-qa-loop
 # @Lesson S1-1300
 # @Lesson S1-1500
 
 set -euo pipefail
 IFS=$'\n\t'
 
+# zone: inside-toolbox
+# See openspec/specs/script-conventions/spec.md
+if [[ ! -f /run/.toolboxenv ]]; then
+  echo "ERROR: this script must run INSIDE the tlatoani-tales toolbox." >&2
+  echo "       toolbox enter tlatoani-tales" >&2
+  echo "       cd ~/src/tlatoāni-tales" >&2
+  echo "       $(basename "$0") ..." >&2
+  exit 1
+fi
+_toolbox="$(awk -F= '/^name=/{gsub(/"/,"",$2); print $2}' /run/.containerenv 2>/dev/null || true)"
+if [[ "${_toolbox}" != "tlatoani-tales" ]]; then
+  echo "ERROR: inside toolbox '${_toolbox}', need 'tlatoani-tales'." >&2
+  exit 1
+fi
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-readonly TOOLBOX_NAME="tlatoani-tales"         # ASCII per TB03.
 readonly DEFAULT_COMFY_HOST="127.0.0.1"
 readonly DEFAULT_COMFY_PORT=8188
-readonly NOT_SILVERBLUE_MSG="Local inference supports Fedora Silverblue only. Season 2 teaches why."
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PROJECT_DIR
@@ -67,12 +73,7 @@ MODE="start"
 
 usage() {
   cat <<'EOF'
-Tlatoāni Tales — local inference runtime launcher (Season 1 MVP, toolbox-based).
-
-Runs ComfyUI inside the `tlatoani-tales` toolbox, which already provides
-GPU passthrough automatically. No podman container, no CDI, no
-hardened-flag ceremony — see openspec/specs/isolation/spec.md
-§Phased isolation for why.
+Tlatoāni Tales — local inference runtime launcher (Season 1 MVP, toolbox-resident).
 
 Usage:
   start-inference.sh [--host H] [--port N]
@@ -81,10 +82,11 @@ Usage:
   start-inference.sh --help
 
 Options:
-  --host H       Bind ComfyUI to host H inside the toolbox (default 127.0.0.1).
-  --port N       Bind to port N (default 8188). The port is already
-                 reachable from the host because toolbox shares the
-                 network namespace with the host in rootless podman.
+  --host H       Bind ComfyUI to host H (default 127.0.0.1). Because
+                 the toolbox shares the network namespace with the
+                 host, the host shell reaches it on localhost
+                 without any --publish ceremony.
+  --port N       Bind to port N (default 8188).
   --stop         Stop the running ComfyUI, if any.
   --status       Report whether ComfyUI is running.
   --help         Print this and exit 0.
@@ -93,9 +95,9 @@ State:
   PID file     tools/inference/comfyui.pid (gitignored)
   Log file     tools/logs/comfyui.log (gitignored)
 
-Prerequisites (both provided by scripts/bootstrap-comfyui.sh):
-  - Toolbox `tlatoani-tales` exists
-  - ComfyUI installed at tools/ComfyUI/ with a working .venv
+Prerequisites (provided by scripts/bootstrap-comfyui.sh):
+  - tools/ComfyUI/.venv/ with torch + ComfyUI requirements installed
+  - Model weights under tools/ComfyUI/models/
 EOF
 }
 
@@ -130,33 +132,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------------------------------------------------------------------------
-# Precondition guards
+# ComfyUI install guard
 # ---------------------------------------------------------------------------
-
-if [[ ! -r /etc/os-release ]] \
-   || ! grep -qE '^VARIANT_ID=("?)silverblue\1$' /etc/os-release; then
-  echo "${NOT_SILVERBLUE_MSG}" >&2
-  exit 1
-fi
-
-if ! command -v toolbox >/dev/null 2>&1; then
-  echo "toolbox not found. Silverblue ships it by default; check 'which toolbox'." >&2
-  exit 1
-fi
-
-# `toolbox list --containers` prints one row per container. The name is
-# the second whitespace-separated field. We match exactly.
-if ! toolbox list --containers 2>/dev/null \
-      | awk 'NR>1 {print $2}' \
-      | grep -qx "${TOOLBOX_NAME}"; then
-  cat >&2 <<EOF
-Toolbox '${TOOLBOX_NAME}' not found. Create with:
-  toolbox create ${TOOLBOX_NAME}
-Then bootstrap ComfyUI:
-  scripts/bootstrap-comfyui.sh
-EOF
-  exit 1
-fi
 
 if [[ ! -x "${COMFY_DIR}/.venv/bin/python" ]]; then
   cat >&2 <<EOF
@@ -210,8 +187,8 @@ if [[ "${MODE}" == "stop" ]]; then
   pid="$(read_pid)"
   if pid_alive "${pid}"; then
     echo "stopping pid ${pid}…"
-    # Kill the whole process group so the toolbox-run wrapper + child
-    # python together go down cleanly.
+    # Kill the whole process group first — setsid-launched start means the
+    # leader IS the process group id, so `kill -- -${pid}` hits children too.
     kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
     for _ in 1 2 3 4 5; do
       if ! pid_alive "${pid}"; then break; fi
@@ -245,26 +222,27 @@ if [[ -n "${existing}" ]]; then
   rm -f "${PID_FILE}"
 fi
 
-# Port-conflict pre-flight: if something else is already bound, bail
-# with a clear message rather than let ComfyUI die ambiguously.
+# Port-conflict pre-flight: if something else is already bound, bail with
+# a clear message rather than let ComfyUI die ambiguously on startup.
 if command -v ss >/dev/null 2>&1 \
    && ss -lntH "( sport = :${COMFY_PORT} )" 2>/dev/null | grep -q ":${COMFY_PORT}"; then
-  echo "port ${COMFY_PORT} is already in use on the host. Override with --port N or free it." >&2
+  echo "port ${COMFY_PORT} is already in use. Override with --port N or free it first." >&2
   exit 1
 fi
 
-# Launch via `setsid nohup` so we can kill the entire process group
-# cleanly on --stop. The toolbox-run wrapper stays alive while Python
-# runs; SIGTERM on the group cascades into the python child.
-setsid nohup toolbox run -c "${TOOLBOX_NAME}" bash -c \
-  "cd '${COMFY_DIR}' && exec '${COMFY_DIR}/.venv/bin/python' main.py --listen '${COMFY_HOST}' --port '${COMFY_PORT}'" \
+# Launch ComfyUI directly from the venv — no `toolbox run` wrapper, we're
+# already inside. setsid makes the new process a session+group leader so
+# --stop can signal the whole tree with one kill(-pid, -TERM).
+setsid nohup "${COMFY_DIR}/.venv/bin/python" \
+  "${COMFY_DIR}/main.py" \
+  --listen "${COMFY_HOST}" \
+  --port   "${COMFY_PORT}" \
   > "${LOG_FILE}" 2>&1 &
 
 pid="$!"
 echo "${pid}" > "${PID_FILE}"
 
-# Give ComfyUI a moment to start and die-early if the environment is
-# broken (missing weights, python import error, etc).
+# Sanity: give ComfyUI a moment and verify we didn't immediately die.
 sleep 2
 if ! pid_alive "${pid}"; then
   echo "ComfyUI failed to start — see ${LOG_FILE} (tail below):" >&2

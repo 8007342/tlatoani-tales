@@ -73,6 +73,9 @@ pub enum LintRule {
     IsolationFlags,
     /// An `images/*/Containerfile` does not end with a non-root `USER`.
     NoWriteAtNonRoot,
+    /// A `scripts/*.sh` is missing a `# zone: inside-toolbox` or
+    /// `# zone: host` declaration — see `script-conventions/spec.md`.
+    ScriptZoneGuard,
 }
 
 impl LintRule {
@@ -88,6 +91,7 @@ impl LintRule {
             LintRule::SpecInLessonCoverage => "plate.lesson-spec-aligned",
             LintRule::IsolationFlags => "isolation.flags-present",
             LintRule::NoWriteAtNonRoot => "isolation.no-root-in-container",
+            LintRule::ScriptZoneGuard => "script.zone-guard",
         }
     }
 }
@@ -233,6 +237,7 @@ pub async fn verify_all(project_dir: &Path, graph: &SpecGraph) -> Result<LintRep
     check_spec_in_lesson_coverage(project_dir, graph, &mut report);
     check_isolation_flags(project_dir, &mut report);
     check_containerfile_user(project_dir, &mut report);
+    check_script_zone_guard(project_dir, &mut report);
 
     Ok(report)
 }
@@ -1068,6 +1073,60 @@ pub fn check_containerfile_user(project_dir: &Path, report: &mut LintReport) {
                         ),
                     );
                 }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Rule: Script zone guard
+// ---------------------------------------------------------------------------
+
+/// Every `scripts/*.sh` MUST declare its execution zone at the top with
+/// either `# zone: inside-toolbox` or `# zone: host`. See
+/// `openspec/specs/script-conventions/spec.md`. Missing or ambiguous
+/// declaration is a canon failure — the ambiguity is the bug (some user
+/// will run the script in the wrong place and hit a confusing error).
+// @trace spec:script-conventions
+pub fn check_script_zone_guard(project_dir: &Path, report: &mut LintReport) {
+    let scripts = project_dir.join("scripts");
+    if !scripts.is_dir() {
+        return;
+    }
+
+    for path in walk_files(&scripts) {
+        let rp = rel(&path, project_dir);
+        // Only shell scripts — other tooling under scripts/ (Python, etc.)
+        // would have its own zone story.
+        if !path.extension().map(|e| e == "sh").unwrap_or(false) {
+            continue;
+        }
+        let Some(text) = read_text(&path) else {
+            continue;
+        };
+
+        let has_inside = text.lines().any(|l| l.trim_start().starts_with("# zone: inside-toolbox"));
+        let has_host = text.lines().any(|l| l.trim_start().starts_with("# zone: host"));
+
+        match (has_inside, has_host) {
+            (true, false) | (false, true) => {
+                // Exactly one — clean.
+            }
+            (false, false) => {
+                report.add_violation(
+                    LintRule::ScriptZoneGuard,
+                    rp,
+                    None,
+                    "script missing `# zone: inside-toolbox` or `# zone: host` declaration — see openspec/specs/script-conventions/spec.md".to_string(),
+                );
+            }
+            (true, true) => {
+                report.add_violation(
+                    LintRule::ScriptZoneGuard,
+                    rp,
+                    None,
+                    "script declares both `# zone: inside-toolbox` and `# zone: host` — pick one".to_string(),
+                );
             }
         }
     }
