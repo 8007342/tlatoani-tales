@@ -65,6 +65,7 @@ RUN microdnf install -y --nodocs --setopt=install_weak_deps=0 \
         curl \
         tar \
         xz \
+        zstd \
         shadow-utils \
     && microdnf clean all \
     && rm -rf /var/cache/yum /var/cache/dnf
@@ -81,17 +82,22 @@ RUN groupadd --system --gid 10001 tlatoani \
 # We install ollama's standalone binary rather than running the upstream
 # install script — the script expects systemd, user creation, and GPU drivers
 # on the host, none of which belong inside a hardened container image. The
-# .tgz bundle is the supported offline path.
+# release tarball is the supported offline path.
 #
-# TODO(pin): pin an ollama release (e.g. v0.4.x) with SHA-256 verification
-# once the author settles on a version. Tracking :latest drifts.
+# As of v0.21, Linux release artefacts moved from `.tgz` (gzip) to `.tar.zst`
+# (zstd); the older ollama.com/download/ollama-linux-amd64.tgz URL now 404s.
+# We fetch directly from the GitHub release with a pinned version, and
+# decompress via `tar --zstd` (zstd package installed above).
+#
+# TODO(pin): compute + verify SHA-256 on the tarball. Tracking :latest drifts.
+ARG OLLAMA_VERSION=v0.21.1
 RUN set -eux; \
     mkdir -p /opt/ollama/models /opt/ollama/bin; \
     curl -fsSL --retry 3 \
-        https://ollama.com/download/ollama-linux-amd64.tgz \
-        -o /tmp/ollama.tgz; \
-    tar -C /opt/ollama -xzf /tmp/ollama.tgz; \
-    rm -f /tmp/ollama.tgz; \
+        "https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst" \
+        -o /tmp/ollama.tar.zst; \
+    tar -C /opt/ollama --zstd -xf /tmp/ollama.tar.zst; \
+    rm -f /tmp/ollama.tar.zst; \
     # Upstream tarball lays out bin/ and lib/; ensure the binary is on PATH.
     if [ -x /opt/ollama/bin/ollama ]; then \
         ln -sf /opt/ollama/bin/ollama /usr/local/bin/ollama; \

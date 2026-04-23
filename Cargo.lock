@@ -2629,6 +2629,7 @@ dependencies = [
  "tracing",
  "tt-core",
  "tt-events",
+ "unicode-normalization",
  "url",
  "wiremock",
 ]

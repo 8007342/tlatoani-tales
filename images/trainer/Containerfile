@@ -66,10 +66,11 @@ RUN groupadd --system --gid 10001 tlatoani \
                 --home-dir /workspace --shell /sbin/nologin tlatoani
 
 # --- ai-toolkit ---------------------------------------------------------------
-# ai-toolkit is not on PyPI at a supported tag — upstream ships via git.
-# We clone at build time and pip install in editable mode so its CLI
-# (`run.py <config>`) is importable. Runtime is offline (`--network=none`),
-# so every pip dep must already be installed here.
+# ai-toolkit is not a pip-installable package — no pyproject.toml, no setup.py.
+# Upstream runs it directly via `python run.py <config.json>`. We clone the
+# repo, create a venv, install its dependencies, and let the entrypoint call
+# run.py by absolute path. Runtime is offline (`--network=none`) so every pip
+# dep must already be installed here.
 #
 # TODO(pin): pin an ai-toolkit commit SHA. `--depth 1` takes HEAD which drifts.
 RUN git clone --depth 1 https://github.com/ostris/ai-toolkit.git ${AI_TOOLKIT_HOME}
@@ -85,8 +86,6 @@ RUN set -eux; \
     # ai-toolkit's requirements.txt covers transformers, diffusers, peft,
     # safetensors, bitsandbytes, accelerate, etc. Whatever upstream pins.
     pip install -r ${AI_TOOLKIT_HOME}/requirements.txt; \
-    # Editable install so `python -m` paths and entry points resolve.
-    pip install -e ${AI_TOOLKIT_HOME}; \
     deactivate
 
 # --- Workspace skeleton -------------------------------------------------------
