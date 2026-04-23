@@ -1,38 +1,36 @@
 #!/usr/bin/env bash
-# Tlatoāni Tales — canonical local inference launcher.
+# Tlatoāni Tales — local inference runtime launcher (Season 1 MVP).
 #
-# Starts the long-running `tlatoani-tales-inference` container that exposes
-# ComfyUI (port 8188) and ollama (port 11434) to the trusted toolbox over
-# localhost. The trusted Rust crates `tt-comfy` and `tt-qa` reach in over
-# `reqwest`. The container itself runs hardened per
-# `openspec/specs/isolation/spec.md` §Canonical podman run flags.
+# Runs ComfyUI inside the existing `tlatoani-tales` toolbox. The toolbox
+# already provides the untrusted-zone runtime at the level we need for
+# Season 1: rootless podman container, automatic nvidia-smi passthrough,
+# filesystem shared with the host's $HOME so model weights are reachable
+# without bespoke bind mounts. ComfyUI is installed at `tools/ComfyUI/`
+# by `scripts/bootstrap-comfyui.sh`; FLUX-schnell and Qwen-Image weights
+# live under `tools/ComfyUI/models/`.
 #
-# Why not `--network=none`?
-#   `--network=none` gives the container no network namespace at all, which
-#   means `--publish` cannot forward a port to the host (there is nothing
-#   to forward from). Inference is HTTP-served — the trusted client must
-#   reach the in-container API or the whole pipeline stops. So inference
-#   uses the default Podman bridge network, with `--publish` bound on
-#   `127.0.0.1` only so the ports are reachable from the host's loopback
-#   and nowhere else.
+# Why toolbox instead of the hardened podman container
+# ---------------------------------------------------------------------------
+# The hardened-container path (images/inference/Containerfile, full
+# DEFAULT_FLAGS, CDI GPU passthrough) was authored as Season 2 teaching
+# material — the literal demonstration of `podman-run-drop-privileges`.
+# It requires layering `nvidia-container-toolkit` and a `nvidia-ctk cdi
+# generate` step, which is Silverblue-reboot-level state change. Season 1
+# MVP ships without that prerequisite: `nvidia-smi` is already on the
+# host, the toolbox already sees the GPU, and the author's feedback was
+# explicit — *"we don't always know better, use what already works"*.
 #
-#   The container is still **offline-equivalent** in practice: nothing in
-#   the trusted side instructs ComfyUI/ollama to fetch from the internet
-#   at run time. Model weights arrive through read-only bind mounts. The
-#   `--cap-drop=ALL --read-only --userns=keep-id` flags still hold.
+# The trust boundary is still preserved conceptually: the trusted Rust
+# workspace runs in this host shell (or in the same toolbox's cargo
+# workflow) and calls into the ComfyUI HTTP API. The untrusted Python
+# runtime lives inside the toolbox and doesn't leak beyond it. The
+# migration to full hardening is a Season 2 lesson, not an MVP blocker.
+# See openspec/specs/isolation/spec.md §Phased isolation.
 #
-#   Trainer is the role that genuinely uses `--network=none` — it is a
-#   one-shot subprocess that reads bind-mounted refs and writes a
-#   bind-mounted LoRA, no HTTP at all. That asymmetry is real architecture,
-#   not an oversight. See `openspec/specs/isolation/spec.md` §Network mode
-#   per role.
-#
-# Idempotent. Single-instance. Owns the container lifecycle.
-#
-# Exit codes:
-#   0  — Inference container running (or cleanly stopped via --stop).
-#   1  — Precondition failed (wrong OS, missing podman, image absent, port taken).
-#   2  — Container failed to start for a non-precondition reason.
+# Idempotent, PID-file-tracked, single-instance. Exit codes:
+#   0 — ComfyUI running (or cleanly stopped via --stop, or --status query)
+#   1 — Precondition failed (wrong OS, missing toolbox, missing install)
+#   2 — ComfyUI failed to start
 #
 # @trace spec:isolation, spec:orchestrator, spec:visual-qa-loop
 # @Lesson S1-1300
@@ -45,94 +43,78 @@ IFS=$'\n\t'
 # Constants
 # ---------------------------------------------------------------------------
 
-readonly CONTAINER_NAME="tlatoani-tales-inference"   # ASCII per TB03.
-readonly IMAGE_TAG="tlatoani-tales-inference:latest"
+readonly TOOLBOX_NAME="tlatoani-tales"         # ASCII per TB03.
+readonly DEFAULT_COMFY_HOST="127.0.0.1"
 readonly DEFAULT_COMFY_PORT=8188
-readonly DEFAULT_OLLAMA_PORT=11434
 readonly NOT_SILVERBLUE_MSG="Local inference supports Fedora Silverblue only. Season 2 teaches why."
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PROJECT_DIR
 
-readonly MODELS_DIR="${PROJECT_DIR}/tools/ComfyUI/models"
-readonly OLLAMA_MODELS_DIR="${PROJECT_DIR}/tools/ollama-models"
+readonly COMFY_DIR="${PROJECT_DIR}/tools/ComfyUI"
+readonly STATE_DIR="${PROJECT_DIR}/tools/inference"
+readonly LOG_DIR="${PROJECT_DIR}/tools/logs"
+readonly PID_FILE="${STATE_DIR}/comfyui.pid"
+readonly LOG_FILE="${LOG_DIR}/comfyui.log"
 
 # ---------------------------------------------------------------------------
 # CLI parsing
 # ---------------------------------------------------------------------------
 
+COMFY_HOST="${DEFAULT_COMFY_HOST}"
 COMFY_PORT="${DEFAULT_COMFY_PORT}"
-OLLAMA_PORT="${DEFAULT_OLLAMA_PORT}"
 MODE="start"
-# Default GPU passthrough is the modern CDI form. Override at the CLI
-# when CDI isn't configured on the host (or when running CPU-only).
-GPU_FLAGS=(--device "nvidia.com/gpu=all")
 
 usage() {
   cat <<'EOF'
-Tlatoāni Tales — local inference runtime launcher.
+Tlatoāni Tales — local inference runtime launcher (Season 1 MVP, toolbox-based).
+
+Runs ComfyUI inside the `tlatoani-tales` toolbox, which already provides
+GPU passthrough automatically. No podman container, no CDI, no
+hardened-flag ceremony — see openspec/specs/isolation/spec.md
+§Phased isolation for why.
 
 Usage:
-  start-inference.sh [--comfy-port N] [--ollama-port N] [GPU OPTION]
+  start-inference.sh [--host H] [--port N]
   start-inference.sh --stop
-  start-inference.sh --rebuild
+  start-inference.sh --status
   start-inference.sh --help
 
-The first form starts the inference container in the untrusted zone with
-ComfyUI on 127.0.0.1:8188 and ollama on 127.0.0.1:11434 (defaults).
-Idempotent: if already running with the same config, logs the URLs and
-exits 0; if running with a different config, refuses with a clear
-diff; if a stale container exists from a different image, recreates it.
-
 Options:
-  --comfy-port N      Override the host-side ComfyUI port (default 8188).
-  --ollama-port N     Override the host-side ollama port (default 11434).
-  --no-gpu            Run without GPU passthrough (CPU-only — very slow
-                      for FLUX, but useful for smoke-testing the
-                      pipeline on a host without nvidia / CDI).
-  --gpus-flag SPEC    Override the GPU passthrough form. Default is the
-                      CDI form `--device nvidia.com/gpu=all`. Pass for
-                      example `--gpus-flag '--gpus all'` to use the
-                      legacy nvidia-container-runtime path.
-  --stop              Stop and remove the container; exit 0.
-  --rebuild           Remove the local image, rebuild from
-                      images/inference/Containerfile, then start fresh.
-  --help              Print this and exit 0.
+  --host H       Bind ComfyUI to host H inside the toolbox (default 127.0.0.1).
+  --port N       Bind to port N (default 8188). The port is already
+                 reachable from the host because toolbox shares the
+                 network namespace with the host in rootless podman.
+  --stop         Stop the running ComfyUI, if any.
+  --status       Report whether ComfyUI is running.
+  --help         Print this and exit 0.
 
-The container picks up model weights via read-only bind mount of
-${MODELS_DIR/$HOME/~}. Ollama models persist in
-${OLLAMA_MODELS_DIR/$HOME/~} (gitignored).
+State:
+  PID file     tools/inference/comfyui.pid (gitignored)
+  Log file     tools/logs/comfyui.log (gitignored)
 
-See openspec/specs/isolation/spec.md and
-docs/cheatsheets/inference-runtime.md for the boundary contract.
+Prerequisites (both provided by scripts/bootstrap-comfyui.sh):
+  - Toolbox `tlatoani-tales` exists
+  - ComfyUI installed at tools/ComfyUI/ with a working .venv
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --comfy-port)
-      COMFY_PORT="${2:?--comfy-port requires a value}"
+    --host)
+      COMFY_HOST="${2:?--host requires a value}"
       shift 2
       ;;
-    --ollama-port)
-      OLLAMA_PORT="${2:?--ollama-port requires a value}"
-      shift 2
-      ;;
-    --no-gpu)
-      GPU_FLAGS=()
-      shift
-      ;;
-    --gpus-flag)
-      # shellcheck disable=SC2206  # word-splitting is the intent here
-      GPU_FLAGS=( ${2:?--gpus-flag requires a value} )
+    --port)
+      COMFY_PORT="${2:?--port requires a value}"
       shift 2
       ;;
     --stop)
       MODE="stop"
       shift
       ;;
-    --rebuild)
-      MODE="rebuild"
+    --status)
+      MODE="status"
       shift
       ;;
     --help|-h)
@@ -148,7 +130,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------------------------------------------------------------------------
-# OS guard — Silverblue only
+# Precondition guards
 # ---------------------------------------------------------------------------
 
 if [[ ! -r /etc/os-release ]] \
@@ -157,13 +139,67 @@ if [[ ! -r /etc/os-release ]] \
   exit 1
 fi
 
+if ! command -v toolbox >/dev/null 2>&1; then
+  echo "toolbox not found. Silverblue ships it by default; check 'which toolbox'." >&2
+  exit 1
+fi
+
+# `toolbox list --containers` prints one row per container. The name is
+# the second whitespace-separated field. We match exactly.
+if ! toolbox list --containers 2>/dev/null \
+      | awk 'NR>1 {print $2}' \
+      | grep -qx "${TOOLBOX_NAME}"; then
+  cat >&2 <<EOF
+Toolbox '${TOOLBOX_NAME}' not found. Create with:
+  toolbox create ${TOOLBOX_NAME}
+Then bootstrap ComfyUI:
+  scripts/bootstrap-comfyui.sh
+EOF
+  exit 1
+fi
+
+if [[ ! -x "${COMFY_DIR}/.venv/bin/python" ]]; then
+  cat >&2 <<EOF
+ComfyUI venv missing at:
+  ${COMFY_DIR}/.venv
+Bootstrap with:
+  scripts/bootstrap-comfyui.sh
+EOF
+  exit 1
+fi
+
+mkdir -p "${STATE_DIR}" "${LOG_DIR}"
+
 # ---------------------------------------------------------------------------
-# Podman guard
+# PID helpers
 # ---------------------------------------------------------------------------
 
-if ! command -v podman >/dev/null 2>&1; then
-  echo "podman not found. Install with: rpm-ostree install podman" >&2
-  exit 1
+read_pid() {
+  if [[ -f "${PID_FILE}" ]]; then
+    cat "${PID_FILE}" 2>/dev/null
+  fi
+}
+
+pid_alive() {
+  local pid="$1"
+  [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# --status
+# ---------------------------------------------------------------------------
+
+if [[ "${MODE}" == "status" ]]; then
+  pid="$(read_pid)"
+  if pid_alive "${pid}"; then
+    echo "running:"
+    echo "  ComfyUI  http://${COMFY_HOST}:${COMFY_PORT}"
+    echo "  pid      ${pid}"
+    echo "  log      ${LOG_FILE}"
+    exit 0
+  fi
+  echo "not running"
+  exit 0
 fi
 
 # ---------------------------------------------------------------------------
@@ -171,201 +207,73 @@ fi
 # ---------------------------------------------------------------------------
 
 if [[ "${MODE}" == "stop" ]]; then
-  podman stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-  podman rm   "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+  pid="$(read_pid)"
+  if pid_alive "${pid}"; then
+    echo "stopping pid ${pid}…"
+    # Kill the whole process group so the toolbox-run wrapper + child
+    # python together go down cleanly.
+    kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
+    for _ in 1 2 3 4 5; do
+      if ! pid_alive "${pid}"; then break; fi
+      sleep 1
+    done
+    if pid_alive "${pid}"; then
+      echo "force-killing pid ${pid}"
+      kill -KILL -- "-${pid}" 2>/dev/null || kill -KILL "${pid}" 2>/dev/null || true
+    fi
+  fi
+  rm -f "${PID_FILE}"
   echo "stopped"
   exit 0
 fi
 
 # ---------------------------------------------------------------------------
-# --rebuild
+# --start (default) — idempotent
 # ---------------------------------------------------------------------------
 
-if [[ "${MODE}" == "rebuild" ]]; then
-  echo "rebuilding ${IMAGE_TAG} from ${PROJECT_DIR}/images/inference/Containerfile…"
-  podman stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-  podman rm   "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-  podman rmi -f "${IMAGE_TAG}" >/dev/null 2>&1 || true
-  podman build -t "${IMAGE_TAG}" \
-    -f "${PROJECT_DIR}/images/inference/Containerfile" \
-    "${PROJECT_DIR}/images/inference/"
+existing="$(read_pid)"
+if pid_alive "${existing}"; then
+  echo "already running:"
+  echo "  ComfyUI  http://${COMFY_HOST}:${COMFY_PORT}"
+  echo "  pid      ${existing}"
+  echo "  log      ${LOG_FILE}"
+  exit 0
 fi
 
-# ---------------------------------------------------------------------------
-# Image guard
-# ---------------------------------------------------------------------------
-
-if ! podman image exists "${IMAGE_TAG}"; then
-  echo "Inference image ${IMAGE_TAG} not present — building from ${PROJECT_DIR}/images/inference/Containerfile…"
-  podman build -t "${IMAGE_TAG}" \
-    -f "${PROJECT_DIR}/images/inference/Containerfile" \
-    "${PROJECT_DIR}/images/inference/"
+if [[ -n "${existing}" ]]; then
+  echo "stale pid file (pid ${existing} not alive) — cleaning."
+  rm -f "${PID_FILE}"
 fi
 
-# ---------------------------------------------------------------------------
-# Bind-mount targets
-# ---------------------------------------------------------------------------
-
-if [[ ! -d "${MODELS_DIR}" ]]; then
-  echo "Model weights directory missing: ${MODELS_DIR}" >&2
-  echo "Provision via scripts/download-models.sh first." >&2
+# Port-conflict pre-flight: if something else is already bound, bail
+# with a clear message rather than let ComfyUI die ambiguously.
+if command -v ss >/dev/null 2>&1 \
+   && ss -lntH "( sport = :${COMFY_PORT} )" 2>/dev/null | grep -q ":${COMFY_PORT}"; then
+  echo "port ${COMFY_PORT} is already in use on the host. Override with --port N or free it." >&2
   exit 1
 fi
 
-mkdir -p "${OLLAMA_MODELS_DIR}"
+# Launch via `setsid nohup` so we can kill the entire process group
+# cleanly on --stop. The toolbox-run wrapper stays alive while Python
+# runs; SIGTERM on the group cascades into the python child.
+setsid nohup toolbox run -c "${TOOLBOX_NAME}" bash -c \
+  "cd '${COMFY_DIR}' && exec '${COMFY_DIR}/.venv/bin/python' main.py --listen '${COMFY_HOST}' --port '${COMFY_PORT}'" \
+  > "${LOG_FILE}" 2>&1 &
 
-# ---------------------------------------------------------------------------
-# Inspect helpers — used by the idempotency branches below
-# ---------------------------------------------------------------------------
+pid="$!"
+echo "${pid}" > "${PID_FILE}"
 
-# Returns the container's image-id (digest) or empty string if no container.
-container_image_id() {
-  podman container inspect "${CONTAINER_NAME}" --format '{{.Image}}' 2>/dev/null
-}
-
-# Returns the current `${IMAGE_TAG}` image-id (digest) or empty string.
-target_image_id() {
-  podman image inspect "${IMAGE_TAG}" --format '{{.Id}}' 2>/dev/null
-}
-
-# Returns the host-side port currently bound for an in-container port (e.g.
-# `8188`). Empty string if the container doesn't exist or the port isn't
-# published. Returns the FIRST binding only — we always publish exactly one.
-published_host_port() {
-  local in_port="$1"
-  podman container inspect "${CONTAINER_NAME}" \
-    --format "{{ with index .NetworkSettings.Ports \"${in_port}/tcp\" }}{{ (index . 0).HostPort }}{{ end }}" \
-    2>/dev/null
-}
-
-# ---------------------------------------------------------------------------
-# Pre-flight: GPU passthrough sanity
-# ---------------------------------------------------------------------------
-# CDI passthrough (the default) requires `/etc/cdi/nvidia.yaml` to exist.
-# Without it the container record gets created but never starts, leaving
-# subsequent runs to loop on the same error. Bail early with the fix.
-
-if [[ ${#GPU_FLAGS[@]} -gt 0 ]] \
-   && [[ "${GPU_FLAGS[*]:-}" == *"nvidia.com/gpu"* ]]; then
-  if [[ ! -f /etc/cdi/nvidia.yaml && ! -f /etc/cdi/nvidia.json ]]; then
-    cat >&2 <<EOF
-ERROR: --device nvidia.com/gpu=all requires CDI configuration on the host,
-       but neither /etc/cdi/nvidia.yaml nor /etc/cdi/nvidia.json exists.
-
-Fix on Fedora Silverblue:
-  sudo rpm-ostree install nvidia-container-toolkit
-  sudo systemctl reboot                  # required after layering
-  sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-
-Or work around for a smoke test:
-  scripts/start-inference.sh --no-gpu                 # CPU-only (slow)
-  scripts/start-inference.sh --gpus-flag '--gpus all' # legacy nvidia-container-runtime
-EOF
-    exit 1
-  fi
-fi
-
-# ---------------------------------------------------------------------------
-# Already-running branch — validate config, then exit 0 / refuse with diff.
-# ---------------------------------------------------------------------------
-
-if podman ps --filter "name=^${CONTAINER_NAME}$" --format '{{.Names}}' \
-     | grep -qx "${CONTAINER_NAME}"; then
-  actual_comfy="$(published_host_port 8188)"
-  actual_ollama="$(published_host_port 11434)"
-  if [[ "${actual_comfy}"  == "${COMFY_PORT}"  ]] \
-  && [[ "${actual_ollama}" == "${OLLAMA_PORT}" ]]; then
-    echo "already running:"
-    echo "  ComfyUI  http://localhost:${COMFY_PORT}"
-    echo "  ollama   http://localhost:${OLLAMA_PORT}"
-    exit 0
-  fi
-  cat >&2 <<EOF
-${CONTAINER_NAME} is already running with a different port mapping:
-  running:    ComfyUI=${actual_comfy:-?}  ollama=${actual_ollama:-?}
-  requested:  ComfyUI=${COMFY_PORT}  ollama=${OLLAMA_PORT}
-Use --stop to remove it and re-run with the desired ports, or call
-without overriding ports to accept the running config.
-EOF
-  exit 1
-fi
-
-# ---------------------------------------------------------------------------
-# Stopped-but-exists branch — validate image, start; or fall through.
-# ---------------------------------------------------------------------------
-# Three failure modes we recover from automatically:
-#   1. Container exists from a previous failed `podman run` (e.g. CDI not
-#      configured at the time) — start would loop the same error. Remove
-#      and run fresh.
-#   2. Container's image differs from the current ${IMAGE_TAG} (rebuild
-#      happened outside the script). Remove and run fresh.
-#   3. start succeeds but the container exits immediately (we don't catch
-#      this here; the caller can `podman logs` to see why).
-
-if podman container exists "${CONTAINER_NAME}"; then
-  current_image_id="$(container_image_id)"
-  expected_image_id="$(target_image_id)"
-
-  if [[ -n "${current_image_id}" ]] \
-  && [[ "${current_image_id}" == "${expected_image_id}" ]]; then
-    if podman start "${CONTAINER_NAME}" >/dev/null 2>&1; then
-      echo "started:"
-      echo "  ComfyUI  http://localhost:${COMFY_PORT}"
-      echo "  ollama   http://localhost:${OLLAMA_PORT}"
-      exit 0
-    fi
-    echo "podman start failed for the existing ${CONTAINER_NAME}; removing and starting fresh." >&2
-  else
-    echo "${CONTAINER_NAME} was created from a different image; removing and starting fresh." >&2
-  fi
-  podman rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-fi
-
-# ---------------------------------------------------------------------------
-# Fresh run
-# ---------------------------------------------------------------------------
-
-# tt-lint: inference-role — long-running HTTP-served service. Exempt from
-# --network=none (would prevent --publish forwarding) and --rm (we keep the
-# container around for start/stop lifecycle). Every other DEFAULT_FLAGS
-# entry from tt_core::podman remains required.
-#
-# COMFY_HOST and OLLAMA_HOST are overridden to 0.0.0.0 inside the container
-# so the in-container services bind on the bridge interface — without that,
-# they bind only to the in-container loopback and --publish has nothing to
-# forward to.
-#
-# @trace spec:isolation, spec:orchestrator
-if ! podman run --detach \
-  --name "${CONTAINER_NAME}" \
-  --cap-drop=ALL \
-  --security-opt=no-new-privileges \
-  --userns=keep-id \
-  --read-only \
-  --publish "127.0.0.1:${COMFY_PORT}:8188" \
-  --publish "127.0.0.1:${OLLAMA_PORT}:11434" \
-  --env COMFY_HOST=0.0.0.0 \
-  --env COMFY_PORT=8188 \
-  --env OLLAMA_HOST=0.0.0.0:11434 \
-  --tmpfs /tmp \
-  --tmpfs /opt/ComfyUI/temp \
-  --tmpfs /opt/ComfyUI/output \
-  --tmpfs /opt/ComfyUI/.hf-cache \
-  --volume "${MODELS_DIR}:/opt/ComfyUI/models:ro,Z" \
-  --volume "${OLLAMA_MODELS_DIR}:/opt/ollama/models:rw,Z" \
-  "${GPU_FLAGS[@]}" \
-  "${IMAGE_TAG}" \
-  >/dev/null
-then
-  # podman run can leave a created-but-never-started container record
-  # behind on failure. Clean it up so the next invocation starts fresh
-  # rather than looping on the same error in the stopped-but-exists
-  # branch above.
-  podman rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-  echo "podman run failed — see 'podman logs ${CONTAINER_NAME}' if the container exists" >&2
+# Give ComfyUI a moment to start and die-early if the environment is
+# broken (missing weights, python import error, etc).
+sleep 2
+if ! pid_alive "${pid}"; then
+  echo "ComfyUI failed to start — see ${LOG_FILE} (tail below):" >&2
+  tail -n 20 "${LOG_FILE}" >&2 || true
+  rm -f "${PID_FILE}"
   exit 2
 fi
 
 echo "started:"
-echo "  ComfyUI  http://localhost:${COMFY_PORT}"
-echo "  ollama   http://localhost:${OLLAMA_PORT}"
+echo "  ComfyUI  http://${COMFY_HOST}:${COMFY_PORT}"
+echo "  pid      ${pid}"
+echo "  log      ${LOG_FILE}"

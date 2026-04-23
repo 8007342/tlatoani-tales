@@ -85,6 +85,31 @@ podman run \
 
 The flag list lives in exactly one place in code (`tt-podman::DEFAULT_FLAGS`); callers compose role-specific mounts and image tags on top. Drift between the spec and the helper is itself a lint failure (see **Trust test procedure**).
 
+## Phased isolation — current vs target
+
+The architecture described in the rest of this spec (hardened podman containers, full `DEFAULT_FLAGS`, CDI GPU passthrough) is the **target** state. It is not the current state.
+
+**Season 1 MVP** ships with a **toolbox-based** implementation of the untrusted zone:
+
+| Role | Season 1 MVP | Target (Season 2 teach-by-example) |
+|---|---|---|
+| inference | ComfyUI inside the existing `tlatoani-tales` toolbox, launched via `scripts/start-inference.sh`. GPU passthrough is automatic (toolbox's built-in nvidia handling). | The hardened container from `images/inference/Containerfile` with full `DEFAULT_FLAGS` + CDI GPU passthrough. |
+| trainer   | ai-toolkit inside a dedicated inference-style toolbox, or the same one. | `tlatoani-tales-trainer` container with `--network=none` + `DEFAULT_FLAGS`. |
+| viewer    | **Already hardened** — see `scripts/tlatoāni_tales.sh`. Apache httpd in a read-only podman container with the full flag set, localhost-only publish. | unchanged. |
+
+**Why phased:** the full hardened path requires Silverblue-layering `nvidia-container-toolkit` and running `nvidia-ctk cdi generate` — a reboot-level state change on the host. The author's directive when the hardened path hit that wall was explicit: *"nvidia-smi is already installed on the host. Why do you need anything else? just use the existing toolbox, or create a new one if you need to isolate the environment."* That wisdom — **"we do not always know better"** — is architectural, not just operational: the toolbox is a rootless podman container, it already isolates the dev environment, reinventing the hardening story for Season 1 is over-engineering.
+
+**What still holds in Season 1 MVP:**
+
+- The **trust boundary** is a conceptual invariant, not a hardening-level one. Trusted Rust calls ComfyUI via HTTP on `127.0.0.1:8188`; the untrusted Python process runs in the toolbox's container and never receives host credentials because the trusted side never hands any over. `tt-comfy` makes no `pull`/remote calls at render time.
+- The **viewer is already hardened** (Season 1 ships full-flag on that role — see `scripts/tlatoāni_tales.sh`). The trickier-to-harden roles are phased.
+- The **lint teeth** in `tt-lint` and the flag constants in `tt_core::podman` remain the single source of truth for the target state. The toolbox-based launcher doesn't use `podman run` directly, so it doesn't carry the hardening pragma — it's a separate lifecycle.
+
+**What Season 2 will add (candidate lesson material, not canonized):**
+
+- The hardened-container migration itself becomes a strip: Covi bewildered by a `--cap-drop=ALL --network=none` invocation that refuses to start; Tlatoāni quietly pointing at `nvidia-ctk cdi generate`; the aha: **"the same work, harder permissions, better trust."**
+- The caption *"this comic was rendered using offline models"* remains factually verifiable against the flags actually used; Season 1 MVP trainer runs with `--network=none` (tt-lora composes that directly via `DEFAULT_FLAGS`) so LoRA training is genuinely offline at the moment it matters most.
+
 ## Network mode per role
 
 Not every role can take `--network=none`. The trainer can; inference and viewer cannot. The asymmetry is real architecture, not laxity:

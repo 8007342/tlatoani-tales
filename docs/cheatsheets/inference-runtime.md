@@ -1,87 +1,81 @@
-# Inference runtime — cheatsheet
+# Inference runtime — cheatsheet (Season 1 MVP)
 
 <!-- @trace spec:isolation, spec:orchestrator, spec:visual-qa-loop, spec:character-loras -->
 <!-- @Lesson S1-1300, S1-1500 -->
 
-Operational reference for the long-running `tlatoani-tales-inference` container that hosts ComfyUI (FLUX + Qwen-Image) and ollama (VLM). Power-user, scannable, < 10 seconds to find what you need.
+Operational reference for running ComfyUI + (optionally) ollama for the Tlatoāni Tales render pipeline. **Season 1 MVP ships a toolbox-based implementation** — ComfyUI runs inside the existing `tlatoani-tales` toolbox, which already has GPU passthrough. The hardened-podman-container path (`images/inference/Containerfile`, full `DEFAULT_FLAGS`, CDI) remains authored as Season 2 teach-by-example material; see `openspec/specs/isolation/spec.md` §Phased isolation for why.
 
 ## TL;DR
 
 ```
-scripts/start-inference.sh                      # start (idempotent)
-scripts/start-inference.sh --stop               # stop + remove
-scripts/start-inference.sh --rebuild            # rebuild image, then start
-curl -s http://localhost:8188/system_stats      # ComfyUI healthcheck
-curl -s http://localhost:11434/api/tags         # ollama healthcheck
-podman logs tlatoani-tales-inference            # tail the container's stdout
+scripts/start-inference.sh                   # start ComfyUI inside the toolbox (idempotent)
+scripts/start-inference.sh --status          # is it running?
+scripts/start-inference.sh --stop            # stop cleanly
+curl -s http://localhost:8188/system_stats   # ComfyUI healthcheck
 ```
 
-## What runs where
+## What the launcher does
 
-| Process | Inside container | Reachable from host at |
-|---|---|---|
-| ComfyUI HTTP API | `0.0.0.0:8188` | `http://127.0.0.1:8188` |
-| ollama HTTP API  | `0.0.0.0:11434` | `http://127.0.0.1:11434` |
+1. Refuses on any OS that isn't Fedora Silverblue (`VARIANT_ID=silverblue` in `/etc/os-release`).
+2. Checks the `tlatoani-tales` toolbox exists and `tools/ComfyUI/.venv/bin/python` is present (both provisioned by `scripts/bootstrap-comfyui.sh`).
+3. Reads `tools/inference/comfyui.pid`. If a live process matches, reports "already running" and exits 0. If the pid file is stale, cleans it up.
+4. Refuses if the requested port is already bound on the host.
+5. Launches ComfyUI under `setsid nohup toolbox run -c tlatoani-tales …` so the whole process group is killable from the parent. Writes the leader PID to the pid file, streams stdout/stderr to `tools/logs/comfyui.log`.
+6. Waits 2 seconds and verifies the process is still alive; if not, tails the log and exits 2.
 
-Both bind `0.0.0.0` inside the container so `--publish 127.0.0.1:PORT:PORT` from podman can forward; the published port is bound to the host's loopback only — the services are not reachable from anything outside the host.
+**Idempotency invariants** (all verified in the script):
 
-## Hardening flags applied (per `openspec/specs/isolation/spec.md`)
+- Start twice → second call reports "already running" and exits 0.
+- Start → `--stop` → start → second start gets a fresh process.
+- Start, process dies externally → next start cleans the stale PID and begins fresh.
+- Port already bound → exits 1 with a clear message before forking anything.
 
-| Flag | Why |
+## What the script does NOT do (and why that's fine for Season 1)
+
+| Feature | Why deferred |
 |---|---|
-| `--cap-drop=ALL` | No Linux capabilities |
-| `--security-opt=no-new-privileges` | setuid neutralised |
-| `--userns=keep-id` | bind-mount writes land as the host user, not root |
-| `--read-only` | root FS read-only; writable surfaces via `--tmpfs` + scoped binds |
-| `--publish 127.0.0.1:PORT:PORT` | localhost-only port exposure (×2 — ComfyUI + ollama) |
-| `--device nvidia.com/gpu=all` | CDI GPU passthrough |
+| Hardened `podman run` with `--cap-drop=ALL --read-only --userns=keep-id` | The toolbox is a podman container itself; Season 2 will teach the migration to full hardening as an on-screen lesson. |
+| CDI GPU passthrough (`--device nvidia.com/gpu=all`) | Requires Silverblue-layering `nvidia-container-toolkit` + `nvidia-ctk cdi generate` + reboot. Toolbox handles GPU automatically today. |
+| `--network=none` for inference | ComfyUI is HTTP-served; `--network=none` would have no namespace for `--publish` to forward into. See isolation/spec.md §Network mode per role. Trainer **does** use `--network=none` via `tt-lora`. |
+| ollama integration | ollama isn't installed in the toolbox yet. For smoke-testing the render pipeline we run with `TT_QA=off` (skip VLM drift scoring); ollama will be added as the next increment. |
 
-`--rm` and `--network=none` are deliberately **not** applied — see `openspec/specs/isolation/spec.md` §Network mode per role. Inference is a long-running HTTP-served service; it uses the start/stop lifecycle and the default Podman bridge with localhost-only published ports. Trainer is the role that uses `--network=none`.
+## Process model
 
-## Bind mounts
+```
+<your shell>                    <-- you invoke start-inference.sh here
+  └─ setsid nohup                <-- new session + process group
+       └─ toolbox run            <-- wrapper that enters the container
+            └─ podman exec       <-- under the hood
+                 └─ bash -c      <-- runs cd + exec python
+                      └─ python main.py --listen 127.0.0.1 --port 8188
+```
 
-| Host path | Container path | Mode | Purpose |
-|---|---|---|---|
-| `tools/ComfyUI/models/` | `/opt/ComfyUI/models` | `ro,Z` | FLUX + Qwen-Image weights |
-| `tools/ollama-models/`  | `/opt/ollama/models`  | `rw,Z` | ollama VLM models, persistent across restarts |
+- The **PID file** stores the toolbox-run wrapper's PID (parent of everything below).
+- `--stop` sends SIGTERM to the whole process group (kill -- -${pid}), which cascades down to the Python process cleanly.
+- Force-kill kicks in after 5 seconds if SIGTERM isn't respected.
 
-`tmpfs` overlays for ComfyUI's writable scratch (`/opt/ComfyUI/temp`, `/opt/ComfyUI/output`, `/opt/ComfyUI/.hf-cache`) — ephemeral by design.
-
-## First-time provision checklist
-
-1. Build the image once: `scripts/start-inference.sh` will auto-build on first run.
-2. Confirm model weights are present:
-   ```
-   ls tools/ComfyUI/models/checkpoints/   # expect flux1-schnell-fp8.safetensors + Qwen-Image/
-   ```
-3. Pull a VLM into the persistent ollama dir (one-time, requires network):
-   ```
-   curl -s http://localhost:11434/api/pull -d '{"name":"moondream:2b"}'
-   ```
-   Pull lands in `tools/ollama-models/`; subsequent runs reuse it.
-
-## Common troubleshooting
+## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `podman run failed` | Image missing or built for a different arch | `--rebuild` |
-| `Address already in use` on 8188 | Existing ComfyUI or stale container | `--stop` then start, or pick `--comfy-port` |
-| `nvidia.com/gpu=all not found` | CDI not configured for rootless podman | Run `nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml` (Silverblue: layer it via rpm-ostree) |
-| ComfyUI returns `404 /prompt` | Wrong port — ComfyUI listens on `/api/prompt` in some builds | check `curl http://localhost:8188/system_stats` first |
-| `/opt/ComfyUI/models: permission denied` | SELinux relabel missing on the bind | `:Z` is in the script; if you mounted by hand, add it |
-| Models not persisting in ollama | Forgot the `tools/ollama-models` bind mount | use `start-inference.sh`, not a hand-rolled `podman run` |
+| `Local inference supports Fedora Silverblue only.` | Not on Silverblue, or `/etc/os-release` missing `VARIANT_ID=silverblue` | That's the whole point. Season 2 teaches why. |
+| `Toolbox 'tlatoani-tales' not found` | Toolbox never created | `toolbox create tlatoani-tales && scripts/bootstrap-comfyui.sh` |
+| `ComfyUI venv missing at …/.venv` | Bootstrap never ran or venv got trashed | `scripts/bootstrap-comfyui.sh` |
+| `port 8188 is already in use` | Prior instance didn't clean up, or another service is on 8188 | `scripts/start-inference.sh --stop`, or pick `--port N` |
+| Starts then dies within 2s | Broken weights / broken pip env / broken CUDA setup | `tail -100 tools/logs/comfyui.log` — the tail is printed automatically when early-death is detected |
+| `ComfyUI 200 OK` on `/system_stats` but `/prompt` fails | Wrong endpoint — some ComfyUI builds expose it at `/api/prompt` | check via `curl -s http://localhost:8188/object_info | head` first |
+| Stale pid file blocks a restart | Process was killed externally (reboot, OOM) | The script detects this automatically and cleans up; worst case `rm tools/inference/comfyui.pid` manually |
 
 ## Trust boundary cross-references
 
-- The trusted-side HTTP clients live in `crates/tt-comfy/` (ComfyUI) and `crates/tt-qa/` (ollama).
-- The hardening-flag list is the canonical source at `crates/tt-core/src/lib.rs` `tt_core::podman::DEFAULT_FLAGS` — drift between this script and that constant is a `tt-lint` canon failure.
-- The `# tt-lint: inference-role` pragma in this script's `podman run` block is what tells `tt-lint` that `--network=none` and `--rm` are intentionally absent for this role (long-running HTTP-served service).
+- Trusted-side HTTP clients: `crates/tt-comfy/` (ComfyUI), `crates/tt-qa/` (ollama — pending)
+- Hardening-flag source of truth: `crates/tt-core/src/lib.rs` → `tt_core::podman::DEFAULT_FLAGS`
+- Viewer (already hardened, full-flag): `scripts/tlatoāni_tales.sh`
+- Season 2 hardened-inference target: `images/inference/Containerfile` (authored + image built, not the active path)
 
 ## See also
 
-- `openspec/specs/isolation/spec.md` — full boundary contract
-- `openspec/specs/orchestrator/spec.md` — how `tt-render` consumes this container
-- `openspec/specs/visual-qa-loop/spec.md` — VLM checks driven against the ollama side
-- `openspec/specs/character-loras/spec.md` — LoRA bind-mount path under `tools/loras/`
+- `openspec/specs/isolation/spec.md` — full boundary contract, including §Phased isolation
+- `openspec/specs/orchestrator/spec.md` — how `tt-render` consumes this runtime
+- `openspec/specs/visual-qa-loop/spec.md` — VLM checks (will engage when ollama lands in the toolbox)
 - `docs/training-lifecycle.md` — end-to-end storage-layer map
-- `images/inference/Containerfile` — how the image is built
