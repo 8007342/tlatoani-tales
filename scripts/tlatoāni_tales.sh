@@ -150,8 +150,14 @@ fi
 # Ensure bundle exists (build if missing)
 # ---------------------------------------------------------------------------
 
-if [[ ! -f "${BUNDLE_DIR}/calmecac-index.json" ]]; then
-  echo "Calmecac bundle missing — running tt-calmecac build…"
+# Bundle is "ready" only when BOTH the concept index AND the PWA entry
+# point are present. The earlier check on calmecac-index.json alone let
+# a prior bare indexer run satisfy the gate while leaving httpd with no
+# index.html to serve. tt-calmecac::cmd_build copies calmecac/web/* into
+# the bundle, so the second predicate guards that step.
+if [[ ! -f "${BUNDLE_DIR}/calmecac-index.json" ]] \
+   || [[ ! -f "${BUNDLE_DIR}/index.html" ]]; then
+  echo "Calmecac bundle missing or incomplete — running tt-calmecac build…"
   if command -v tt-calmecac >/dev/null 2>&1; then
     tt-calmecac build
   elif command -v cargo >/dev/null 2>&1; then
