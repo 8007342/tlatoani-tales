@@ -944,17 +944,24 @@ pub fn check_isolation_flags(project_dir: &Path, report: &mut LintReport) {
                 .collect::<Vec<_>>()
                 .join("\n");
 
-            // Check the preceding 5 lines for a role-exempt pragma. The
-            // viewer role legitimately omits `--network=none` (it must
-            // accept inbound HTTP) and `--rm` (start/stop lifecycle keeps
-            // the container between script invocations). See
-            // isolation/spec.md §Viewer-role exemption.
-            let pre_start = i.saturating_sub(5);
+            // Check the preceding 15 lines for a role-exempt pragma. Both
+            // the viewer and inference roles legitimately omit
+            // `--network=none` (HTTP-served — would have nothing to
+            // forward to) and `--rm` (start/stop lifecycle, not
+            // run-and-exit). The trainer role does NOT use this pragma:
+            // it genuinely runs with --network=none + --rm. See
+            // isolation/spec.md §Network mode per role.
+            // Window of 15 lines accommodates the comment block that
+            // typically explains the exemption immediately before the
+            // invocation.
+            let pre_start = i.saturating_sub(15);
             let preceding = lines[pre_start..i].join("\n");
             let is_viewer_role = preceding.contains("# tt-lint: viewer-role");
+            let is_inference_role = preceding.contains("# tt-lint: inference-role");
+            let is_long_running_service = is_viewer_role || is_inference_role;
 
             for required in podman::DEFAULT_FLAGS {
-                if is_viewer_role
+                if is_long_running_service
                     && (*required == "--network=none" || *required == "--rm")
                 {
                     continue;

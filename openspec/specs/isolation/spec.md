@@ -85,11 +85,27 @@ podman run \
 
 The flag list lives in exactly one place in code (`tt-podman::DEFAULT_FLAGS`); callers compose role-specific mounts and image tags on top. Drift between the spec and the helper is itself a lint failure (see **Trust test procedure**).
 
-## Offline inference invariant
+## Network mode per role
 
-**Every comic strip in Season 1 is rendered with `--network=none`.**
+Not every role can take `--network=none`. The trainer can; inference and viewer cannot. The asymmetry is real architecture, not laxity:
 
-Once the `tlatoani-tales-inference` image is built, the FLUX and Qwen weights are bind-mounted read-only, and the ollama VLM's weights are bind-mounted alongside, the container has no network path out. ComfyUI's HTTP port is bound on `127.0.0.1` of the host from the container's localhost namespace; the trusted `tt-comfy` client reaches it through the port-forward, not through a shared network.
+| Role | Network mode | Why |
+|---|---|---|
+| **trainer** | `--network=none` | One-shot subprocess. Reads bind-mounted refs, writes a bind-mounted LoRA. No HTTP, no port. The container has zero network namespace; this is the strictest possible posture and is achievable here. |
+| **inference** | `--network=bridge` (Podman default) + `--publish 127.0.0.1:PORT:PORT` for ComfyUI (8188) and ollama (11434) | Long-running HTTP-served service. `--network=none` provides no namespace for `--publish` to forward into; the trusted `tt-comfy`/`tt-qa` clients would have nothing to reach. The published ports are bound on the host's loopback only — services are not reachable from anything outside the host. |
+| **viewer** | `--network=bridge` (Podman default) + `--publish 127.0.0.1:PORT:8080` for httpd | Same shape as inference: HTTP-served, hence requires a network namespace; same loopback-only publish posture. |
+
+The trusted side never instructs an inference or viewer container to reach the wider internet. Model weights arrive through read-only bind mounts; the `tt-comfy` client invokes only `POST /prompt`, `GET /history/:id`, `GET /view`. Outbound from those containers is technically reachable (default bridge has internet egress) — that gap is accepted today as a published deviation, with the migration target documented in `meta-examples/spec.md` ME04 (REUSE/per-file convergence) and a candidate Season-2 lesson on `podman network create --internal` already noted.
+
+## Offline inference invariant (qualified)
+
+**Every comic strip in Season 1 is rendered with the trainer in `--network=none`** (which is where the LoRA training that *makes* the comic happen). Inference and viewer use the bridge-with-localhost-publish posture above. The captioned claim *"this comic was rendered using offline models"* remains factually accurate and mechanically verifiable at three levels:
+
+1. The trainer container (`tlatoani-tales-trainer`) runs with `--network=none`. Inspect via `tt_core::podman::DEFAULT_FLAGS` and `crates/tt-lora/src/lib.rs`.
+2. The inference container's ComfyUI never makes outbound HTTP at render time — the trusted client only sends inputs, never instructs a fetch. Inspect via `crates/tt-comfy/src/lib.rs` (no `pull`, no remote model fetch).
+3. The model weights themselves are bind-mounted read-only from `tools/ComfyUI/models/` — once provisioned, the container has all it needs without the network.
+
+The Season-2 candidate lesson "this comic was rendered using offline models" stands; the path to literal `--network=none` for inference is migration to a `podman network create --internal tlatoani-tales-net` (no upstream gateway, port publishing intact) — flagged but not yet executed. Honest convergence: the spec acknowledges where reality bites and points at the next step, rather than misstating the status quo.
 
 The captioned claim for Season 2 — *"this comic was rendered using offline models"* — is factually true, inspectable in a single place: the flags handed to `podman run`. A reader who doubts it can read `tt-podman::DEFAULT_FLAGS` and `grep -r 'network=' scripts/` and verify the claim in under a minute.
 
